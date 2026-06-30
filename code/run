@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# L2P Analysis (Single) - Run Script
+# Executes the L2P analysis workflow
+
+cd /code
+Rscript main.R "$@"

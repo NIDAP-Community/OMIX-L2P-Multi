@@ -1,0 +1,419 @@
+{
+	"version": 1,
+	"named_parameters": true,
+	"general": {
+		"title": "L2P Analysis (Single)",
+		"instructions": "START HERE: Fill in 'Basic Settings' to run with smart defaults. Advanced users can customize gene selection, pathway filtering, and visualization in the other sections."
+	},
+	"datasets": [
+		{
+			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
+			"name": "DEG Table",
+			"help_text": "DEG table with gene names, fold changes, and statistical measures"
+		}
+	],
+	"categories": [
+		{
+			"id": "basic",
+			"name": "⭐ Basic Settings",
+			"help_text": "Essential parameters to get started"
+		},
+		{
+			"id": "columns",
+			"name": "Column Overrides",
+			"help_text": "Override auto-detected column names if needed"
+		},
+		{
+			"id": "gene_selection",
+			"name": "Gene Selection",
+			"help_text": "Fine-tune gene selection criteria"
+		},
+		{
+			"id": "pathways",
+			"name": "Pathway Settings",
+			"help_text": "Customize pathway filtering and selection"
+		},
+		{
+			"id": "visualization",
+			"name": "Visualization",
+			"help_text": "Customize plot appearance and output"
+		}
+	],
+	"parameters": [
+		{
+			"id": "94McHJPPOY64loE5",
+			"category": "basic",
+			"name": "Comparison",
+			"param_name": "comparison",
+			"help_text": "Which comparison to analyze (e.g., 'B-A', 'C-A', 'Treatment-Control'). Must match column prefix in your DEG table",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "Y7xCYGlfIRYN2N5Z",
+			"category": "basic",
+			"name": "Species",
+			"param_name": "species",
+			"help_text": "Gene annotation species. Non-human genes will be converted to human orthologs",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "Human",
+			"extra_data": [
+				"Human",
+				"Mouse",
+				"Rat",
+				"Rabbit",
+				"Zebrafish",
+				"Macaque",
+				"Drosophila"
+			]
+		},
+		{
+			"id": "cwRpaZjU8FtiEmNy",
+			"category": "basic",
+			"name": "Pathway Collections",
+			"param_name": "collections_to_include",
+			"help_text": "Comma-separated pathway collections: GO, REACTOME, KEGG, PANTH, PID, BIOCYC, WikiPathways, H, C1-C8 (MSigDB)",
+			"type": "text",
+			"value_type": "string",
+			"default_value": "GO,REACTOME,KEGG"
+		},
+		{
+			"id": "hVe2vsYEwWspuaw9",
+			"category": "columns",
+			"name": "Gene Name Column",
+			"param_name": "gene_name_column",
+			"help_text": "Override auto-detected gene name column (e.g., 'Gene', 'symbol'). Leave blank to auto-detect",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "7W1j1N3jOgZzs4n1",
+			"category": "columns",
+			"name": "Ranking Column",
+			"param_name": "column_used_to_rank_genes",
+			"help_text": "Override ranking column if not named '{comparison}_tstat'. Leave blank to auto-detect",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "mG1q4UqiAWHAK3c3",
+			"category": "columns",
+			"name": "Significance Column",
+			"param_name": "significance_column",
+			"help_text": "Override significance/p-value column if not named '{comparison}_pval'. Leave blank to auto-detect",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "dmn2SSns4qlpAc00",
+			"category": "columns",
+			"name": "Fold Change Column",
+			"param_name": "fold_change_column",
+			"help_text": "Override fold change column if not named '{comparison}_FC'. Leave blank to auto-detect",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "67AD3IeabVW1SpID",
+			"category": "gene_selection",
+			"name": "Select By Rank",
+			"param_name": "select_by_rank",
+			"help_text": "Select genes by rank (recommended) or by significance/fold change thresholds",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "TRUE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "7gQHhTEzrCKAxOGT",
+			"category": "gene_selection",
+			"name": "Select Top Percentage",
+			"param_name": "select_top_percentage_of_genes",
+			"help_text": "Select top percentage of genes (vs fixed number)",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "TRUE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "V0LLfB4TPEOZmpDv",
+			"category": "gene_selection",
+			"name": "Select Top Genes",
+			"param_name": "select_top_genes",
+			"help_text": "Number of top genes to select (if not using percentage)",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "500",
+			"minimum": 1
+		},
+		{
+			"id": "eLSjZSDrST0MboKd",
+			"category": "gene_selection",
+			"name": "Significance Threshold",
+			"param_name": "significance_threshold",
+			"help_text": "Significance threshold for gene selection (if not using rank)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "0.05",
+			"minimum": 0,
+			"maximum": 1
+		},
+		{
+			"id": "u42ZeOjL6fwl6WnU",
+			"category": "gene_selection",
+			"name": "Fold Change Threshold",
+			"param_name": "fold_change_threshold",
+			"help_text": "Fold change threshold for gene selection (if not using rank)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "1.2",
+			"minimum": 0
+		},
+		{
+			"id": "6ZFP26vpRfFWzbjO",
+			"category": "gene_selection",
+			"name": "Minimum DEG Genes",
+			"param_name": "minimum_number_of_deg_genes",
+			"help_text": "Minimum number of DEG genes required",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "50",
+			"minimum": 1
+		},
+		{
+			"id": "z7mD5Buq4Nzd3KGJ",
+			"category": "pathways",
+			"name": "Minimum Pathway Hits",
+			"param_name": "minimum_pathway_hit_count",
+			"help_text": "Minimum genes required per pathway to be considered",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "5",
+			"minimum": 1
+		},
+		{
+			"id": "jiFrpsCC9o6klUMq",
+			"category": "pathways",
+			"name": "P-value Threshold for Output",
+			"param_name": "p_value_threshold_for_output",
+			"help_text": "Filter output to pathways below this p-value threshold (0 = include all)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "0.05",
+			"minimum": 0,
+			"maximum": 1
+		},
+		{
+			"id": "vAtkgVusM0d7MOfy",
+			"category": "pathways",
+			"name": "Use Built-in Gene Universe",
+			"param_name": "use_built_in_gene_universe",
+			"help_text": "Use built-in gene universe instead of detected genes",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "FALSE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "8Pub8KNHXz937PKo",
+			"category": "pathways",
+			"name": "Use FDR P-values",
+			"param_name": "use_fdr_p_values",
+			"help_text": "Use FDR-adjusted p-values for pathway significance",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "FALSE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "GV9b0gmQt2M2dnRC",
+			"category": "visualization",
+			"name": "Number of Pathways to Plot",
+			"param_name": "number_of_pathways_to_plot",
+			"help_text": "Number of top pathways to display in plots",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "12",
+			"minimum": 1
+		},
+		{
+			"id": "dSOnx3vMc0pyLkDj",
+			"category": "visualization",
+			"name": "Pathway Label Max Length",
+			"param_name": "pathway_axis_label_max_length",
+			"help_text": "Maximum characters for pathway labels",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "50",
+			"minimum": 10
+		},
+		{
+			"id": "Sz1XjYt1hLvUmM4I",
+			"category": "visualization",
+			"name": "Pathway Label Font Size",
+			"param_name": "pathway_axis_label_font_size",
+			"help_text": "Font size for pathway axis labels",
+			"type": "text",
+			"value_type": "integer",
+			"default_value": "15",
+			"minimum": 8
+		},
+		{
+			"id": "JrQlHk6Rf0YuezVK",
+			"category": "visualization",
+			"name": "Plot Top Pathways Up",
+			"param_name": "plot_top_pathways_up",
+			"help_text": "Plot top upregulated pathways",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "TRUE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "Brp11xeiLLpQnWFt",
+			"category": "visualization",
+			"name": "Custom Pathways Up",
+			"param_name": "pathways_to_use_up",
+			"help_text": "Comma-separated list of specific upregulated pathways to plot (overrides top selection)",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "Lie0ZtmeN0d4iIPc",
+			"category": "visualization",
+			"name": "Plot Top Pathways Down",
+			"param_name": "plot_top_pathways_down",
+			"help_text": "Plot top downregulated pathways",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "TRUE",
+			"extra_data": [
+				"TRUE",
+				"FALSE"
+			]
+		},
+		{
+			"id": "pmkjw8WTnUfCgagZ",
+			"category": "visualization",
+			"name": "Custom Pathways Down",
+			"param_name": "pathways_to_use_down",
+			"help_text": "Comma-separated list of specific downregulated pathways to plot (overrides top selection)",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "m9qVBK8IvQ12QZ4F",
+			"category": "visualization",
+			"name": "Sort Bubble Plot By",
+			"param_name": "sort_bubble_plot_by",
+			"help_text": "Variable to sort bubble plot by",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "percent gene hits per pathway",
+			"extra_data": [
+				"percent gene hits per pathway",
+				"number of hits",
+				"Fisher's Exact pval"
+			]
+		},
+		{
+			"id": "ZAEaXvsYeN5W1NEJ",
+			"category": "visualization",
+			"name": "Bubble Size Variable",
+			"param_name": "plot_bubble_size",
+			"help_text": "Variable to use for bubble size",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "number of hits",
+			"extra_data": [
+				"number of hits",
+				"percent gene hits per pathway",
+				"Fisher's Exact pval"
+			]
+		},
+		{
+			"id": "vqWR0S0OGDZUFusS",
+			"category": "visualization",
+			"name": "Bubble Color Variable",
+			"param_name": "plot_bubble_color",
+			"help_text": "Variable to use for bubble color",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "Fisher's Exact pval",
+			"extra_data": [
+				"Fisher's Exact pval",
+				"number of hits",
+				"percent gene hits per pathway"
+			]
+		},
+		{
+			"id": "WEaRQyfXjWUEXR9c",
+			"category": "visualization",
+			"name": "Bubble Colors",
+			"param_name": "bubble_colors",
+			"help_text": "Color scheme for bubble plots",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "blues",
+			"extra_data": [
+				"blues",
+				"reds",
+				"greens",
+				"purples"
+			]
+		},
+		{
+			"id": "veXOGKJw5xG6Qoco",
+			"category": "visualization",
+			"name": "Bar Plot Color",
+			"param_name": "color_for_bar",
+			"help_text": "Color scheme for bar plots",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "GreentoBlue",
+			"extra_data": [
+				"GreentoBlue",
+				"RedtoBlue",
+				"YellowtoRed"
+			]
+		},
+		{
+			"id": "J92t1vG74bmF4V3g",
+			"category": "visualization",
+			"name": "Plot Width",
+			"param_name": "export_plot_width",
+			"help_text": "Plot width in inches",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "12",
+			"minimum": 4
+		},
+		{
+			"id": "CpYIe5UOUTiBwhjw",
+			"category": "visualization",
+			"name": "Plot Height",
+			"param_name": "export_plot_height",
+			"help_text": "Plot height in inches",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "12",
+			"minimum": 4
+		}
+	]
+}
