@@ -454,6 +454,13 @@ l2p_single <- function(
   ## --------- ##
   ## Libraries ##
   ## --------- ##
+  .l2p_timer <- Sys.time()
+  .l2p_step <- function(msg) {
+    elapsed <- as.numeric(difftime(Sys.time(), .l2p_timer, units = "secs"))
+    cat(sprintf("  [L2P %6.1fs] %s\n", elapsed, msg))
+  }
+  
+  .l2p_step("Loading R libraries")
   library(l2p)
   library(l2psupp)
   library(dplyr)
@@ -462,6 +469,7 @@ l2p_single <- function(
   library(stringr)
   library(RCurl)
   library(grid)
+  .l2p_step("Loaded all libraries")
 
   ## --------- ##
   ## Functions ##
@@ -866,117 +874,100 @@ l2p_single <- function(
     "\n\nOnly pathways that are over-represented are tested by One-Sided Fisher's Exact Test.\nPathways that show under-representation are excluded and not returned"
   )
 
+  .l2p_step("Gene selection completed")
+
+  # ========== OPTIMIZATION: Pre-compute gene universe once ==========
+  # Extract raw gene universe once (all genes from DEG table)
+  raw_gene_universe <- as.vector(unique(unlist(genesmat[gene_name_column])))
+  cat(sprintf("\n\nGene universe size: %d genes\n", length(raw_gene_universe)))
+  
+  # Update gene names or map orthologs for the ENTIRE gene universe ONCE
+  .l2p_step("Processing gene universe (updating names/mapping orthologs)")
+  
+  if (species == "Human") {
+    # Create named vector to preserve original->updated mapping
+    updated_genes_vec <- sapply(raw_gene_universe, function(x) {
+      updategenes(x, trust = 1)
+    })
+    cat(sprintf("Updated %d gene symbols in universe\n", length(updated_genes_vec)))
+  } else {
+    # Map orthologs for gene universe
+    updated_genes_vec <- sapply(raw_gene_universe, function(x) {
+      o2o(x, species, "human")[1]
+    })
+    
+    # Remove genes without homologs
+    no_orth_count <- sum(is.na(updated_genes_vec))
+    updated_genes_vec <- updated_genes_vec[!is.na(updated_genes_vec)]
+    
+    cat(sprintf("Gene universe ortholog mapping: %d with homologs, %d without\n",
+                length(updated_genes_vec), no_orth_count))
+  }
+  
+  .l2p_step("Gene universe processing completed")
+  
+  # Store processed gene universe for use in loop
+  processed_gene_universe <- as.character(updated_genes_vec)
+  # ========== END OPTIMIZATION ==========
+
   # Running L2P
   for (i in 1:length(genes_to_include)) {
     cat("\n\n")
     cat(sprintf("Analysis of %s :", plotitle[[i]]))
     cat("\n\n")
-    genes_to_include[[i]] <- as.vector(unique(unlist(genes_to_include[[i]])))
-    gene_universe <- as.vector(unique(unlist(genesmat[gene_name_column])))
-
+    .l2p_step(sprintf("Starting %s analysis", plotitle[[i]]))
+    
+    # Get the list of original gene names for this analysis direction
+    original_genes <- as.vector(unique(unlist(genes_to_include[[i]])))
+    
+    # OPTIMIZATION: Subset from already-processed gene universe instead of re-processing
     if (species == "Human") {
-      new_gene_names <- sapply(genes_to_include[[i]], function(x) {
-        updategenes(x, trust = 1)
-      })
-      # Print out genes in genelist that are updated:
-      updated_genes_idx <- sapply(seq_along(new_gene_names), function(i) {
-        names(new_gene_names)[i] != new_gene_names[[i]]
-      })
-      updated_genes <- new_gene_names[updated_genes_idx]
-      updated_genes_num <- sum(updated_genes_idx)
-
-      cat(paste(
-        "\nGene names have been updated to latest names. Number of updated genes is:",
-        updated_genes_num
-      ))
-
-      cat("\nOriginal:Updated\n")
-      sapply(seq_along(updated_genes), function(i) {
-        print(paste0(names(updated_genes)[i], ":", updated_genes[i]))
-      })
-
-      # Set up genelist and gene universe using updated genes
-      genes_to_include[[i]] <- as.character(new_gene_names)
-      gene_universe <- updategenes(gene_universe, trust = 1)
-      lastgene[[i]] <- names(tail(new_gene_names, 1))
+      # Find the updated names for our selected genes
+      genes_to_include[[i]] <- updated_genes_vec[names(updated_genes_vec) %in% original_genes]
+      
+      # Report updates
+      updated_count <- sum(names(genes_to_include[[i]]) != genes_to_include[[i]])
+      cat(sprintf("\nGene names updated from cache. Number of updated genes: %d\n", updated_count))
+      
+      if (updated_count > 0) {
+        cat("\nOriginal:Updated\n")
+        updated_idx <- names(genes_to_include[[i]]) != genes_to_include[[i]]
+        for (j in which(updated_idx)) {
+          cat(sprintf("%s:%s\n", names(genes_to_include[[i]])[j], genes_to_include[[i]][j]))
+        }
+      }
+      
+      genes_to_include[[i]] <- as.character(genes_to_include[[i]])
+      lastgene[[i]] <- names(tail(genes_to_include[[i]], 1))
     } else {
-      # Get homologs for genelist:
-      orth_genes <- sapply(genes_to_include[[i]], function(x) {
-        o2o(x, species, "human")[1]
-      })
-      no_orth <- names(orth_genes[unlist(lapply(orth_genes, function(x) {
-        is.na(x)
-      }))])
-      orth <- orth_genes[unlist(lapply(orth_genes, function(x) !is.na(x)))]
-
-      # Print out numbers of genes with homologs in genelist:
-      num_no_orth <- length(no_orth)
-      perc_num_no_orth <- formatC(
-        (length(no_orth) / length(genes_to_include[[i]])) * 100,
-        digits = 2,
-        format = "f"
-      )
-      num_orth <- length(orth)
-      perc_num_orth <- formatC(
-        (length(orth) / length(genes_to_include[[i]])) * 100,
-        digits = 2,
-        format = "f"
-      )
-
-      cat(paste(
-        "\n\nNumber of genes in the genelist without a homologue:",
-        num_no_orth,
-        ", Percentage:",
-        perc_num_no_orth,
-        "%\n"
-      ))
-      cat(no_orth)
-
-      cat(paste(
-        "\n\nNumber of genes in the genelist with a homologue:",
-        num_orth,
-        ",Percentage:",
-        perc_num_orth,
-        "%\n"
-      ))
-      cat("\nGene:Homolog\n")
-      cat(sapply(seq_along(orth), function(i) {
-        paste0(names(orth)[i], ":", orth[i])
-      }))
-
-      # Set up genelist using gene homologs
-      lastgene[[i]] <- names(tail(orth, 1))
-      genes_to_include[[i]] <- as.character(unlist(orth))
-
-      # Get homologs for gene universe:
-      orth_gene_universe <- sapply(gene_universe, function(x) {
-        o2o(x, species, "human")[1]
-      })
-      no_orth_gu <- names(orth_gene_universe[unlist(lapply(
-        orth_gene_universe,
-        function(x) is.na(x)
-      ))])
-      orth_gu <- orth_gene_universe[unlist(lapply(
-        orth_gene_universe,
-        function(x) !is.na(x)
-      ))]
-
-      gene_universe <- as.character(unlist(orth_gu))
-
-      # Print out numbers of genes with homologs in genelist:
-      num_no_orth <- length(no_orth_gu)
-      num_orth <- length(orth_gu)
-      cat(paste(
-        "\n\nNumber of genes in the gene universe without a homologue:",
-        num_no_orth,
-        "\n"
-      ))
-      cat(paste(
-        "Number of genes in the gene universe with a homologue:",
-        num_orth,
-        "\n"
-      ))
+      # Find the homologs for our selected genes
+      genes_to_include[[i]] <- updated_genes_vec[names(updated_genes_vec) %in% original_genes]
+      
+      # Report homologs
+      no_orth_count <- sum(!(original_genes %in% names(genes_to_include[[i]])))
+      has_orth_count <- length(genes_to_include[[i]])
+      
+      cat(sprintf("\n\nNumber of genes in genelist without homologue: %d (%.1f%%)\n",
+                  no_orth_count, 100 * no_orth_count / length(original_genes)))
+      cat(sprintf("Number of genes in genelist with homologue: %d (%.1f%%)\n",
+                  has_orth_count, 100 * has_orth_count / length(original_genes)))
+      
+      if (has_orth_count > 0) {
+        cat("\nGene:Homolog\n")
+        for (j in 1:min(10, length(genes_to_include[[i]]))) {
+          cat(sprintf("%s:%s\n", names(genes_to_include[[i]])[j], genes_to_include[[i]][j]))
+        }
+        if (length(genes_to_include[[i]]) > 10) {
+          cat(sprintf("... (%d more)\n", length(genes_to_include[[i]]) - 10))
+        }
+      }
+      
+      genes_to_include[[i]] <- as.character(genes_to_include[[i]])
+      lastgene[[i]] <- names(tail(genes_to_include[[i]], 1))
     }
+    
+    # Use cached processed gene universe
+    gene_universe <- processed_gene_universe
 
     # Check overall size of genelist and p-values of lowest significant gene
     sizegenelist <- length(genes_to_include[[i]])
@@ -1021,6 +1012,8 @@ l2p_single <- function(
     )
     print(lastgenedat)
 
+    .l2p_step(sprintf("Running Fisher's exact test for %s", plotitle[[i]]))
+
     if (use_built_in_gene_universe == TRUE) {
       x[[i]] <- l2p(genes_to_include[[i]], categories = collections_to_include)
       cat("\n\nUsing built-in gene universe.\n")
@@ -1036,6 +1029,8 @@ l2p_single <- function(
       )
       cat(paste0("Total number of pathways tested: ", nrow(x[[i]])))
     }
+    
+    .l2p_step(sprintf("Completed enrichment for %s", plotitle[[i]]))
 
     genes_column <- intersect(
       c("allgenesinpw", "genesinpathway", "genes_in_pathway", "genes", "hits"),
@@ -1106,6 +1101,8 @@ l2p_single <- function(
       x[[i]] <- NULL
     }
   }
+
+  .l2p_step("Starting visualization")
 
   # Plotting the results
   if (any(!vapply(x, is.null, logical(1)))) {
@@ -1227,8 +1224,11 @@ l2p_single <- function(
         orig_genes
       )
 
+    .l2p_step("Completed visualization")
+
     if (!is.null(export_results_file) && nzchar(export_results_file)) {
       utils::write.csv(combined_paths, export_results_file, row.names = FALSE)
+      .l2p_step("Saved results to CSV")
     }
 
     return(combined_paths)

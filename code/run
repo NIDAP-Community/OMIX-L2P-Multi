@@ -4,5 +4,16 @@ set -euo pipefail
 # L2P Analysis (Single) - Run Script
 # Executes the L2P analysis workflow
 
+echo "=== L2P Analysis Debug Timing Log ==="
+echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')"
+START_TIME=$(date +%s)
+
 cd /code
 Rscript main.R "$@"
+
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+echo ""
+echo "=== Total Runtime ==="
+echo "End time: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total elapsed time: ${ELAPSED} seconds ($(date -u -d @${ELAPSED} +'%H:%M:%S'))"

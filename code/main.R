@@ -3,11 +3,25 @@
 # L2P Analysis (Single) - Simplified Main Entry Point
 # Over-representation pathway analysis with automatic column detection
 
+# ===== DEBUG TIMING UTILITIES =====
+.timer_start <- Sys.time()
+.step_times <- list()
+
+log_time <- function(step_name) {
+  current_time <- Sys.time()
+  elapsed <- as.numeric(difftime(current_time, .timer_start, units = "secs"))
+  cat(sprintf("[%6.1fs] %s\n", elapsed, step_name))
+  .step_times[[step_name]] <<- elapsed
+}
+
 # Source the L2P function
+log_time("Script initialization")
 source("functions/L2P_Analysis.R")
+log_time("Loaded L2P_Analysis.R")
 
 # Load optparse for command-line argument parsing
 library(optparse)
+log_time("Loaded optparse library")
 
 # Define command-line options (all function parameters exposed)
 option_list <- list(
@@ -55,6 +69,7 @@ option_list <- list(
 
 opt_parser <- OptionParser(option_list=option_list)
 opt <- parse_args(opt_parser)
+log_time("Parsed command-line arguments")
 
 # Validate required parameters
 if (is.null(opt$comparison) || opt$comparison == "") {
@@ -62,6 +77,7 @@ if (is.null(opt$comparison) || opt$comparison == "") {
 }
 
 # Find and read DEG table from attached data asset
+log_time("Starting data loading")
 rds_files <- list.files("/data/deg_table", pattern = "\\.rds$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
 csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
 
@@ -69,6 +85,7 @@ if (length(rds_files) > 0) {
   deg_table_path <- rds_files[1]
   cat(sprintf("Loading DEG table from RDS file: %s\n", deg_table_path))
   deg_data <- readRDS(deg_table_path)
+  log_time("Loaded RDS file")
   
   # If RDS contains a list, extract the data frame
   if (is.list(deg_data) && !is.data.frame(deg_data)) {
@@ -91,6 +108,7 @@ if (length(rds_files) > 0) {
   } else {
     deg_data <- read.delim(deg_table_path, stringsAsFactors = FALSE, check.names = FALSE)
   }
+  log_time("Loaded CSV/TSV file")
   
 } else {
   stop("ERROR: No RDS, CSV, or TSV file found in attached DEG table data asset at /data/deg_table/")
@@ -261,6 +279,9 @@ if (!is.null(opt$column_used_to_rank_genes) && opt$column_used_to_rank_genes != 
   }
 }
 
+log_time("Completed column detection and parameter setup")
+cat("\n=== Starting L2P pathway analysis ===\n")
+
 results <- l2p_single(
   deg_table = deg_data,
   gene_name_column = gene_name_column,
@@ -298,6 +319,36 @@ results <- l2p_single(
   export_results_file = export_results
 )
 
-cat("\nL2P Analysis completed successfully!\n")
+log_time("L2P analysis function completed")
+
+cat("\n=== L2P Analysis completed successfully! ===\n")
 cat(sprintf("Results saved to: %s\n", export_results))
 cat(sprintf("Plots saved to: %s\n", export_plot))
+
+# Print timing summary
+cat("\n=== Timing Summary (Sorted by Duration) ===\n")
+
+# Calculate step durations
+step_durations <- list()
+prev_time <- 0
+for (step_name in names(.step_times)) {
+  elapsed <- .step_times[[step_name]]
+  step_duration <- elapsed - prev_time
+  step_durations[[step_name]] <- list(
+    duration = step_duration,
+    cumulative = elapsed
+  )
+  prev_time <- elapsed
+}
+
+# Sort by duration (descending)
+sorted_steps <- names(step_durations)[order(sapply(step_durations, function(x) x$duration), decreasing = TRUE)]
+
+# Print sorted
+for (step_name in sorted_steps) {
+  info <- step_durations[[step_name]]
+  cat(sprintf("[%6.1fs] (+%5.1fs) %s\n", info$cumulative, info$duration, step_name))
+}
+
+total_time <- as.numeric(difftime(Sys.time(), .timer_start, units = "secs"))
+cat(sprintf("\n[%6.1fs] TOTAL RUNTIME\n", total_time))
