@@ -1,7 +1,18 @@
 #!/usr/bin/env Rscript
 
-# L2P Analysis (Single) - Simplified Main Entry Point
-# Over-representation pathway analysis with automatic column detection
+# L2P Multi-Comparison Analysis - Main Entry Point
+# Pathway over-representation analysis comparing multiple DEG contrasts
+
+# ===== ENVIRONMENT INFO =====
+cat("\n======================================\n")
+cat("L2P Multi-Comparison Analysis\n")
+cat("======================================\n")
+cat(sprintf("R version: %s\n", R.version.string))
+cat(sprintf("l2p: %s\n", as.character(packageVersion("l2p"))))
+cat(sprintf("l2psupp: %s\n", as.character(packageVersion("l2psupp"))))
+cat(sprintf("ggplot2: %s\n", as.character(packageVersion("ggplot2"))))
+cat(sprintf("dplyr: %s\n", as.character(packageVersion("dplyr"))))
+cat("======================================\n\n")
 
 # ===== DEBUG TIMING UTILITIES =====
 .timer_start <- Sys.time()
@@ -14,57 +25,75 @@ log_time <- function(step_name) {
   .step_times[[step_name]] <<- elapsed
 }
 
-# Source the L2P function
+# Source the L2P Multi function
 log_time("Script initialization")
-source("functions/L2P_Analysis.R")
-log_time("Loaded L2P_Analysis.R")
+source("functions/analysis_functions.R")
+log_time("Loaded L2P Multi function")
 
 # Load optparse for command-line argument parsing
 library(optparse)
 log_time("Loaded optparse library")
 
-# Define command-line options (all function parameters exposed)
+# Define command-line options (matching L2P Multi parameters)
 option_list <- list(
-  # Basic settings
-  make_option("--comparison", type="character", help="Comparison to analyze"),
+  # Required parameters
+  make_option("--input_file", type="character", help="Input DEG table file path (RDS, CSV, TSV)"),
+  make_option("--gene_names_column", type="character", help="Column containing gene names"),
+  
+  # Comparison columns
+  make_option("--comparisons", type="character", default=NULL, help="Comma-separated comparison IDs (e.g., 'B-A,C-A')"),
+  make_option("--t_statistic_columns", type="character", default=NULL, help="Comma-separated t-statistic column names"),
+  make_option("--significance_columns", type="character", default=NULL, help="Comma-separated p-value column names"),
+  make_option("--fold_change_columns", type="character", default=NULL, help="Comma-separated fold change column names"),
+  
+  # Analysis parameters
   make_option("--species", type="character", default="Human", help="Species [default %default]"),
-  make_option("--collections_to_include", type="character", default="GO,REACTOME,KEGG", help="Pathway collections [default %default]"),
-  
-  # Column overrides
-  make_option("--gene_name_column", type="character", default=NULL, help="Optional: Override gene name column"),
-  make_option("--column_used_to_rank_genes", type="character", default=NULL, help="Optional: Override ranking column"),
-  make_option("--significance_column", type="character", default=NULL, help="Optional: Override significance column"),
-  make_option("--fold_change_column", type="character", default=NULL, help="Optional: Override fold change column"),
-  
-  # Gene selection
-  make_option("--select_by_rank", type="character", default="TRUE", help="Select by rank [default %default]"),
-  make_option("--select_top_percentage_of_genes", type="character", default="TRUE", help="Select top percentage [default %default]"),
-  make_option("--select_top_genes", type="integer", default=500, help="Number of top genes [default %default]"),
-  make_option("--significance_threshold", type="double", default=0.05, help="Significance threshold [default %default]"),
+  make_option("--update_genes", type="logical", default=TRUE, help="Update gene symbols [default %default]"),
+  make_option("--collections", type="character", default="H", help="Comma-separated collections (GO,REACTOME,KEGG,H,C1-C8) [default %default]"),
+  make_option("--select_by_rank", type="logical", default=TRUE, help="Select genes by rank [default %default]"),
+  make_option("--select_top_percentage", type="logical", default=TRUE, help="Select top percentage of genes [default %default]"),
+  make_option("--select_top_genes", type="integer", default=500, help="Number of top genes if not using percentage [default %default]"),
+  make_option("--significance_threshold", type="double", default=0.05, help="P-value threshold [default %default]"),
   make_option("--fold_change_threshold", type="double", default=1.2, help="Fold change threshold [default %default]"),
-  make_option("--minimum_number_of_deg_genes", type="integer", default=50, help="Minimum DEG genes [default %default]"),
   
-  # Pathway settings
-  make_option("--minimum_pathway_hit_count", type="integer", default=5, help="Minimum pathway hits [default %default]"),
-  make_option("--p_value_threshold_for_output", type="double", default=0.05, help="P-value threshold [default %default]"),
-  make_option("--use_built_in_gene_universe", type="character", default="FALSE", help="Use built-in gene universe [default %default]"),
-  make_option("--use_fdr_p_values", type="character", default="FALSE", help="Use FDR p-values [default %default]"),
+  # Plot parameters
+  make_option("--top_pathways", type="integer", default=10, help="Number of top pathways to compare [default %default]"),
+  make_option("--number_of_significant_events", type="integer", default=1, help="Minimum significant events [default %default]"),
+  make_option("--maximum_pathways_to_plot", type="integer", default=15, help="Maximum pathways to display in plot [default %default]"),
+  make_option("--plot_bubble_size", type="character", default="pval", help="Bubble size metric (pval/fdr/number_hits) [default %default]"),
+  make_option("--plot_bubble_color", type="character", default="enrichment_score", help="Bubble color metric [default %default]"),
+  make_option("--pathway_axis_label_max_length", type="integer", default=45, help="Max pathway label length [default %default]"),
+  make_option("--pathway_axis_label_font_size", type="integer", default=5, help="Pathway label font size [default %default]"),
   
-  # Visualization
-  make_option("--number_of_pathways_to_plot", type="integer", default=12, help="Number of pathways to plot [default %default]"),
-  make_option("--pathway_axis_label_max_length", type="integer", default=50, help="Pathway label max length [default %default]"),
-  make_option("--pathway_axis_label_font_size", type="integer", default=15, help="Pathway label font size [default %default]"),
-  make_option("--plot_top_pathways_up", type="character", default="TRUE", help="Plot top pathways up [default %default]"),
-  make_option("--pathways_to_use_up", type="character", default=NULL, help="Custom pathways up"),
-  make_option("--plot_top_pathways_down", type="character", default="TRUE", help="Plot top pathways down [default %default]"),
-  make_option("--pathways_to_use_down", type="character", default=NULL, help="Custom pathways down"),
-  make_option("--sort_bubble_plot_by", type="character", default="percent gene hits per pathway", help="Sort bubble plot by [default %default]"),
-  make_option("--plot_bubble_size", type="character", default="number of hits", help="Bubble size variable [default %default]"),
-  make_option("--plot_bubble_color", type="character", default="Fisher's Exact pval", help="Bubble color variable [default %default]"),
-  make_option("--bubble_colors", type="character", default="blues", help="Bubble color scheme [default %default]"),
-  make_option("--color_for_bar", type="character", default="GreentoBlue", help="Bar plot color [default %default]"),
-  make_option("--export_plot_width", type="double", default=12, help="Plot width [default %default]"),
-  make_option("--export_plot_height", type="double", default=12, help="Plot height [default %default]")
+  # Output parameters
+  make_option("--output_plot", type="character", default="/results/l2p_multi_plot.png", help="Output plot file path [default %default]"),
+  make_option("--output_results", type="character", default="/results/l2p_multi_results.csv", help="Output results file path [default %default]"),
+  make_option("--plot_width", type="integer", default=14, help="Plot width in inches [default %default]"),
+  make_option("--plot_height", type="integer", default=16, help="Plot height in inches [default %default]"),
+  
+  # Advanced parameters
+  make_option("--custom_pathways", type="character", default=NULL, help="Path to custom pathway file [default %default]"),
+  make_option("--custom_pathway_name_column", type="character", default="gene_set_name", help="Column name for pathway names in custom file [default %default]"),
+  make_option("--custom_pathway_gene_column", type="character", default="gene_symbol", help="Column name for genes in custom file [default %default]"),
+  make_option("--plot_bubble_max_color", type="double", default=1, help="Maximum value for color scale [default %default]"),
+  make_option("--use_built_in_gene_universe", type="logical", default=FALSE, help="Use built-in gene universe [default %default]"),
+  make_option("--minimum_pathway_hit_count", type="integer", default=5, help="Minimum genes per pathway [default %default]"),
+  make_option("--pathway_size_limit", type="integer", default=500, help="Maximum pathway size [default %default]"),
+  make_option("--p_value_limit", type="double", default=0.05, help="P-value cutoff for pathways [default %default]"),
+  make_option("--use_fdr_for_significance", type="logical", default=FALSE, help="Use FDR instead of p-value [default %default]"),
+  make_option("--pathways_to_remove", type="character", default=NULL, help="Comma-separated pathways to exclude [default %default]"),
+  make_option("--rename_groups", type="character", default=NULL, help="Comma-separated new names for comparison groups [default %default]"),
+  make_option("--vertical_line_placement", type="character", default=NULL, help="Comma-separated positions for vertical separator lines [default %default]"),
+  make_option("--use_panel_plot", type="logical", default=FALSE, help="Use panel layout for plot [default %default]"),
+  make_option("--use_dynamic_pathway_font_size", type="logical", default=TRUE, help="Auto-adjust font based on pathway count [default %default]"),
+  make_option("--custom_pathway_order", type="character", default=NULL, help="Comma-separated custom order for pathways [default %default]"),
+  make_option("--column_spacing", type="double", default=0.5, help="Spacing between comparison columns [default %default]"),
+  
+  # Axis labeling
+  make_option("--x_axis_title", type="character", default=NULL, help="Optional x-axis title [default %default]"),
+  make_option("--y_axis_title", type="character", default=NULL, help="Optional y-axis title [default %default]"),
+  make_option("--x_axis_tick_labels", type="character", default=NULL, help="Comma-separated labels for x-axis ticks [default %default]"),
+  make_option("--y_axis_tick_labels", type="character", default=NULL, help="Comma-separated labels for y-axis ticks [default %default]")
 )
 
 opt_parser <- OptionParser(option_list=option_list)
@@ -72,258 +101,175 @@ opt <- parse_args(opt_parser)
 log_time("Parsed command-line arguments")
 
 # Validate required parameters
-if (is.null(opt$comparison) || opt$comparison == "") {
-  stop("ERROR: 'Comparison' parameter is required. Please specify which comparison to analyze (e.g., 'B-A', 'C-A').")
+if (is.null(opt$input_file)) {
+  stop("ERROR: 'input_file' parameter is required")
+}
+if (is.null(opt$gene_names_column)) {
+  stop("ERROR: 'gene_names_column' parameter is required")
+}
+if (!file.exists(opt$input_file)) {
+  stop(sprintf("ERROR: Input file not found: %s", opt$input_file))
 }
 
-# Find and read DEG table from attached data asset
+# Load input data
 log_time("Starting data loading")
-rds_files <- list.files("/data/deg_table", pattern = "\\.rds$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+if (grepl("\\.rds$", opt$input_file, ignore.case = TRUE)) {
+  deg_table <- readRDS(opt$input_file)
+} else if (grepl("\\.csv$", opt$input_file, ignore.case = TRUE)) {
+  deg_table <- read.csv(opt$input_file, stringsAsFactors = FALSE)
+} else if (grepl("\\.tsv$|\\.txt$", opt$input_file, ignore.case = TRUE)) {
+  deg_table <- read.delim(opt$input_file, stringsAsFactors = FALSE)
+} else {
+  stop("ERROR: Input file must be .rds, .csv, or .tsv")
+}
+log_time("Loaded data file")
 
-if (length(rds_files) > 0) {
-  deg_table_path <- rds_files[1]
-  cat(sprintf("Loading DEG table from RDS file: %s\n", deg_table_path))
-  deg_data <- readRDS(deg_table_path)
-  log_time("Loaded RDS file")
+# Validate gene names column exists
+available_cols <- colnames(deg_table)
+if (!opt$gene_names_column %in% available_cols) {
+  cat("\n=== ERROR: Gene names column not found ===\n")
+  cat(sprintf("You specified: '%s'\n", opt$gene_names_column))
+  cat(sprintf("Available columns (%d total):\n", length(available_cols)))
+  cat(paste("  -", available_cols, collapse="\n"))
+  cat("\n\n")
+  stop(sprintf("Column '%s' does not exist in the data. Please check the column name.", opt$gene_names_column))
+}
+cat(sprintf("Using gene names column: %s\n", opt$gene_names_column))
+
+# Parse comma-separated parameters
+parse_comma_sep <- function(x) {
+  if (is.null(x) || x == "" || x == "NULL") return(NULL)
+  trimws(unlist(strsplit(x, ",")))
+}
+
+comparisons_vec <- parse_comma_sep(opt$comparisons)
+t_stat_cols <- parse_comma_sep(opt$t_statistic_columns)
+sig_cols <- parse_comma_sep(opt$significance_columns)
+fc_cols <- parse_comma_sep(opt$fold_change_columns)
+collections_vec <- parse_comma_sep(opt$collections)
+log_time("Parsed column parameters")
+
+cat("\n=== L2P Multi-Comparison Analysis ===\n")
+cat(sprintf("Species: %s\n", opt$species))
+cat(sprintf("Collections: %s\n", paste(collections_vec, collapse=", ")))
+cat(sprintf("Select by rank: %s\n", opt$select_by_rank))
+if (!is.null(comparisons_vec)) {
+  cat(sprintf("Comparisons: %s\n", paste(comparisons_vec, collapse=", ")))
+  cat("\nDerived column names:\n")
+  for (comp in comparisons_vec) {
+    cat(sprintf("  %s_tstat, %s_pval, %s_FC\n", comp, comp, comp))
+  }
+  cat("\nSearching for these in the data...\n")
+  all_cols <- colnames(deg_table)
+  for (comp in comparisons_vec) {
+    tstat_col <- paste0(comp, "_tstat")
+    pval_col <- paste0(comp, "_pval")
+    fc_col <- paste0(comp, "_FC")
+    cat(sprintf("  %s: %s\n", tstat_col, ifelse(tstat_col %in% all_cols, "✓ FOUND", "✗ MISSING")))
+    cat(sprintf("  %s: %s\n", pval_col, ifelse(pval_col %in% all_cols, "✓ FOUND", "✗ MISSING")))
+    cat(sprintf("  %s: %s\n", fc_col, ifelse(fc_col %in% all_cols, "✓ FOUND", "✗ MISSING")))
+  }
   
-  # If RDS contains a list, extract the data frame
-  if (is.list(deg_data) && !is.data.frame(deg_data)) {
-    df_elements <- sapply(deg_data, is.data.frame)
-    if (any(df_elements)) {
-      deg_data <- deg_data[[which(df_elements)[1]]]
-      cat("Extracted data frame from list\n")
-    } else {
-      stop("ERROR: RDS file does not contain a data frame")
+  # Show columns that might match
+  cat("\nColumns in data that contain comparison names:\n")
+  for (comp in comparisons_vec) {
+    matching <- grep(comp, all_cols, value = TRUE, fixed = TRUE)
+    if (length(matching) > 0) {
+      cat(sprintf("  Matching '%s': %s\n", comp, paste(matching, collapse=", ")))
     }
   }
-  
-} else if (length(csv_files) > 0) {
-  deg_table_path <- csv_files[1]
-  cat(sprintf("Loading DEG table from CSV/TSV file: %s\n", deg_table_path))
-  
-  file_ext <- tolower(tools::file_ext(deg_table_path))
-  if (file_ext == "csv") {
-    deg_data <- read.csv(deg_table_path, stringsAsFactors = FALSE, check.names = FALSE)
-  } else {
-    deg_data <- read.delim(deg_table_path, stringsAsFactors = FALSE, check.names = FALSE)
-  }
-  log_time("Loaded CSV/TSV file")
-  
+}
+cat("\n")
+
+# Run L2P Multi analysis
+log_time("Starting L2P Multi analysis")
+
+# Parse advanced parameters that may be NULL or comma-separated
+custom_pathways_param <- if (!is.null(opt$custom_pathways) && opt$custom_pathways != "") opt$custom_pathways else NULL
+pathways_to_remove_vec <- if (!is.null(opt$pathways_to_remove) && opt$pathways_to_remove != "") {
+  trimws(strsplit(opt$pathways_to_remove, ",")[[1]])
 } else {
-  stop("ERROR: No RDS, CSV, or TSV file found in attached DEG table data asset at /data/deg_table/")
+  NULL
 }
-
-# Verify we have a data frame
-if (!is.data.frame(deg_data)) {
-  stop("ERROR: Loaded data is not a data frame")
+rename_groups_vec <- if (!is.null(opt$rename_groups) && opt$rename_groups != "") {
+  trimws(strsplit(opt$rename_groups, ",")[[1]])
+} else {
+  NULL
 }
-
-cat(sprintf("Loaded DEG table: %d rows x %d columns\n", nrow(deg_data), ncol(deg_data)))
-cat(sprintf("Available columns: %s\n\n", paste(colnames(deg_data), collapse=", ")))
-
-# Convert string boolean parameters to logical
-opt$select_by_rank <- as.logical(opt$select_by_rank)
-opt$select_top_percentage_of_genes <- as.logical(opt$select_top_percentage_of_genes)
-opt$use_built_in_gene_universe <- as.logical(opt$use_built_in_gene_universe)
-opt$use_fdr_p_values <- as.logical(opt$use_fdr_p_values)
-opt$plot_top_pathways_up <- as.logical(opt$plot_top_pathways_up)
-opt$plot_top_pathways_down <- as.logical(opt$plot_top_pathways_down)
-
-# Parse collections (comma-separated string to vector)
-collections <- strsplit(opt$collections_to_include, ",")[[1]]
-collections <- trimws(collections)  # Remove whitespace
-
-# Parse custom pathways if provided
-pathways_up <- if (!is.null(opt$pathways_to_use_up) && opt$pathways_to_use_up != "") {
-  trimws(strsplit(opt$pathways_to_use_up, ",")[[1]])
+vertical_line_vec <- if (!is.null(opt$vertical_line_placement) && opt$vertical_line_placement != "") {
+  as.numeric(trimws(strsplit(opt$vertical_line_placement, ",")[[1]]))
+} else {
+  c()
+}
+custom_pathway_order_vec <- if (!is.null(opt$custom_pathway_order) && opt$custom_pathway_order != "") {
+  trimws(strsplit(opt$custom_pathway_order, ",")[[1]])
+} else {
+  NULL
+}
+x_axis_tick_labels_vec <- if (!is.null(opt$x_axis_tick_labels) && opt$x_axis_tick_labels != "") {
+  trimws(strsplit(opt$x_axis_tick_labels, ",")[[1]])
+} else {
+  NULL
+}
+y_axis_tick_labels_vec <- if (!is.null(opt$y_axis_tick_labels) && opt$y_axis_tick_labels != "") {
+  trimws(strsplit(opt$y_axis_tick_labels, ",")[[1]])
 } else {
   NULL
 }
 
-pathways_down <- if (!is.null(opt$pathways_to_use_down) && opt$pathways_to_use_down != "") {
-  trimws(strsplit(opt$pathways_to_use_down, ",")[[1]])
-} else {
-  c()
-}
-
-# Set output file paths to /results/
-export_plot <- file.path("/results", "l2p_plots.png")
-export_results <- file.path("/results", "l2p_results.csv")
-
-# Run L2P analysis
-cat(sprintf("Starting L2P Analysis for comparison: %s\n", opt$comparison))
-cat(sprintf("Species: %s\n", opt$species))
-cat(sprintf("Collections: %s\n\n", paste(collections, collapse=", ")))
-
-# Auto-detect gene name column (or use user override)
-if (!is.null(opt$gene_name_column) && opt$gene_name_column != "") {
-  # User provided override
-  gene_name_column <- opt$gene_name_column
-  if (!(gene_name_column %in% colnames(deg_data))) {
-    stop(sprintf("ERROR: Specified gene column '%s' not found in data.\nAvailable columns: %s", 
-                 gene_name_column, paste(colnames(deg_data), collapse=", ")))
-  }
-  cat(sprintf("Using user-specified gene name column: '%s'\n", gene_name_column))
-} else {
-  # Auto-detect
-  gene_col_candidates <- c("Gene", "gene", "symbol", "Symbol", "gene_name", "gene_symbol", "GeneSymbol")
-  gene_name_column <- NULL
-  for (col in gene_col_candidates) {
-    if (col %in% colnames(deg_data)) {
-      gene_name_column <- col
-      break
-    }
-  }
-  
-  if (is.null(gene_name_column)) {
-    # Default to first column if no match
-    gene_name_column <- colnames(deg_data)[1]
-    cat(sprintf("Warning: Could not auto-detect gene column. Using first column: '%s'\n", gene_name_column))
-    cat("If this is incorrect, specify the correct column in 'Gene Name Column (Optional)' in Advanced Options.\n")
-  } else {
-    cat(sprintf("Auto-detected gene name column: '%s'\n", gene_name_column))
-  }
-}
-
-# Handle significance column (or use user override)
-if (!is.null(opt$significance_column) && opt$significance_column != "") {
-  significance_column <- opt$significance_column
-  if (!(significance_column %in% colnames(deg_data))) {
-    stop(sprintf("ERROR: Specified significance column '%s' not found in data.\nAvailable columns: %s", 
-                 significance_column, paste(colnames(deg_data), collapse=", ")))
-  }
-  cat(sprintf("Using user-specified significance column: '%s'\n", significance_column))
-} else {
-  # Try to auto-detect based on comparison
-  sig_candidates <- c(
-    paste0(opt$comparison, "_pval"),
-    paste0(opt$comparison, "_pvalue"),
-    paste0(opt$comparison, "_p.value"),
-    paste0(opt$comparison, "_FDR")
-  )
-  significance_column <- NULL
-  for (col in sig_candidates) {
-    if (col %in% colnames(deg_data)) {
-      significance_column <- col
-      break
-    }
-  }
-  
-  if (!is.null(significance_column)) {
-    cat(sprintf("Auto-detected significance column: '%s'\n", significance_column))
-  } else {
-    cat("Note: Could not auto-detect significance column. Function will handle internally.\n")
-  }
-}
-
-# Handle fold change column (or use user override)
-if (!is.null(opt$fold_change_column) && opt$fold_change_column != "") {
-  fold_change_column <- opt$fold_change_column
-  if (!(fold_change_column %in% colnames(deg_data))) {
-    stop(sprintf("ERROR: Specified fold change column '%s' not found in data.\nAvailable columns: %s", 
-                 fold_change_column, paste(colnames(deg_data), collapse=", ")))
-  }
-  cat(sprintf("Using user-specified fold change column: '%s'\n", fold_change_column))
-} else {
-  # Try to auto-detect based on comparison
-  fc_candidates <- c(
-    paste0(opt$comparison, "_FC"),
-    paste0(opt$comparison, "_fc"),
-    paste0(opt$comparison, "_FoldChange"),
-    paste0(opt$comparison, "_logFC")
-  )
-  fold_change_column <- NULL
-  for (col in fc_candidates) {
-    if (col %in% colnames(deg_data)) {
-      fold_change_column <- col
-      break
-    }
-  }
-  
-  if (!is.null(fold_change_column)) {
-    cat(sprintf("Auto-detected fold change column: '%s'\n", fold_change_column))
-  } else {
-    cat("Note: Could not auto-detect fold change column. Function will handle internally.\n")
-  }
-}
-
-# Handle ranking column (or use user override)
-if (!is.null(opt$column_used_to_rank_genes) && opt$column_used_to_rank_genes != "") {
-  ranking_column <- opt$column_used_to_rank_genes
-  if (!(ranking_column %in% colnames(deg_data))) {
-    stop(sprintf("ERROR: Specified ranking column '%s' not found in data.\nAvailable columns: %s", 
-                 ranking_column, paste(colnames(deg_data), collapse=", ")))
-  }
-  cat(sprintf("Using user-specified ranking column: '%s'\n", ranking_column))
-} else {
-  # Try to auto-detect based on comparison
-  rank_candidates <- c(
-    paste0(opt$comparison, "_tstat"),
-    paste0(opt$comparison, "_t.stat"),
-    paste0(opt$comparison, "_t_stat"),
-    paste0(opt$comparison, "_stat")
-  )
-  ranking_column <- NULL
-  for (col in rank_candidates) {
-    if (col %in% colnames(deg_data)) {
-      ranking_column <- col
-      break
-    }
-  }
-  
-  if (!is.null(ranking_column)) {
-    cat(sprintf("Auto-detected ranking column: '%s'\n", ranking_column))
-  } else {
-    cat("Note: Could not auto-detect ranking column. Function will handle internally.\n")
-  }
-}
-
-log_time("Completed column detection and parameter setup")
-cat("\n=== Starting L2P pathway analysis ===\n")
-
-results <- l2p_single(
-  deg_table = deg_data,
-  gene_name_column = gene_name_column,
-  column_used_to_rank_genes = ranking_column,
-  significance_column = significance_column,
-  fold_change_column = fold_change_column,
-  comparison = opt$comparison,
+results <- l2p_multi(
+  deg_table = deg_table,
+  gene_names_column = opt$gene_names_column,
+  comparisons = comparisons_vec,
+  t_statistic_columns = t_stat_cols,
+  significance_columns = sig_cols,
+  fold_change_columns = fc_cols,
   species = opt$species,
-  collections_to_include = collections,
+  update_genes = opt$update_genes,
+  collections_to_include = collections_vec,
+  custom_pathways = custom_pathways_param,
+  custom_pathway_name_column = opt$custom_pathway_name_column,
+  custom_pathway_gene_column = opt$custom_pathway_gene_column,
   select_by_rank = opt$select_by_rank,
-  select_top_percentage_of_genes = opt$select_top_percentage_of_genes,
+  top_pathways = opt$top_pathways,
+  number_of_significant_events = opt$number_of_significant_events,
+  select_top_percentage_of_genes = opt$select_top_percentage,
   select_top_genes = opt$select_top_genes,
   significance_threshold = opt$significance_threshold,
   fold_change_threshold = opt$fold_change_threshold,
-  minimum_number_of_deg_genes = opt$minimum_number_of_deg_genes,
-  number_of_pathways_to_plot = opt$number_of_pathways_to_plot,
-  pathway_axis_label_max_length = opt$pathway_axis_label_max_length,
-  plot_top_pathways_up = opt$plot_top_pathways_up,
-  pathways_to_use_up = pathways_up,
-  plot_top_pathways_down = opt$plot_top_pathways_down,
-  pathways_to_use_down = pathways_down,
-  sort_bubble_plot_by = opt$sort_bubble_plot_by,
   plot_bubble_size = opt$plot_bubble_size,
   plot_bubble_color = opt$plot_bubble_color,
-  bubble_colors = opt$bubble_colors,
+  plot_bubble_max_color = opt$plot_bubble_max_color,
+  pathway_axis_label_max_length = opt$pathway_axis_label_max_length,
   pathway_axis_label_font_size = opt$pathway_axis_label_font_size,
-  use_fdr_p_values = opt$use_fdr_p_values,
-  color_for_bar = opt$color_for_bar,
   use_built_in_gene_universe = opt$use_built_in_gene_universe,
   minimum_pathway_hit_count = opt$minimum_pathway_hit_count,
-  p_value_threshold_for_output = opt$p_value_threshold_for_output,
-  export_plot_file = export_plot,
-  export_plot_width = opt$export_plot_width,
-  export_plot_height = opt$export_plot_height,
-  export_results_file = export_results
+  pathway_size_limit = opt$pathway_size_limit,
+  p_value_limit = opt$p_value_limit,
+  use_fdr_for_significance = opt$use_fdr_for_significance,
+  maximum_pathways_to_plot = opt$maximum_pathways_to_plot,
+  pathways_to_remove = pathways_to_remove_vec,
+  rename_groups = rename_groups_vec,
+  vertical_line_placement = vertical_line_vec,
+  use_panel_plot = opt$use_panel_plot,
+  use_dynamic_pathway_font_size = opt$use_dynamic_pathway_font_size,
+  custom_pathway_order = custom_pathway_order_vec,
+  column_spacing = opt$column_spacing,
+  x_axis_title = opt$x_axis_title,
+  y_axis_title = opt$y_axis_title,
+  x_axis_tick_labels = x_axis_tick_labels_vec,
+  y_axis_tick_labels = y_axis_tick_labels_vec,
+  export_plot_file = opt$output_plot,
+  export_plot_width = opt$plot_width,
+  export_plot_height = opt$plot_height,
+  export_results_file = opt$output_results
 )
+log_time("L2P Multi analysis completed")
 
-log_time("L2P analysis function completed")
-
-cat("\n=== L2P Analysis completed successfully! ===\n")
-cat(sprintf("Results saved to: %s\n", export_results))
-cat(sprintf("Plots saved to: %s\n", export_plot))
+cat("\n=== L2P Multi Analysis completed successfully! ===\n")
+cat(sprintf("Results saved to: %s\n", opt$output_results))
+cat(sprintf("Plot saved to: %s\n", opt$output_plot))
+cat("\n")
 
 # Print timing summary
 cat("\n=== Timing Summary (Sorted by Duration) ===\n")

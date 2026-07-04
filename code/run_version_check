@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== Package Version Check ==="
+Rscript /code/version_check.R
