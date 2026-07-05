@@ -1,166 +1,265 @@
-# OMIX L2P Analysis (Single)
+# OMIX L2P Analysis (Multi)
 
 ## Overview
 
-Over-representation pathway analysis for differential expression results. Given a gene list, this tool identifies over-represented pathways using Fisher's exact test via the [CCBR L2P package](https://github.com/ccbr/l2p).
+**Version**: v4.0 | **Part of the OMIX analysis suite**
 
-**Part of the OMIX analysis suite** - A collection of genomics tools for reproducible bioinformatics workflows.
+Pathway over-representation analysis using L2P (List to pathways) for comparing multiple differential expression contrasts. Creates bubble plots showing pathway enrichment patterns across different comparisons.
 
-## Description
+## L2P (List to pathways) Analysis
 
-L2P (List to pathways) performs over-representation analysis to identify biological pathways that are significantly enriched in your differentially expressed genes. The analysis:
+This analysis performs pathway enrichment using Fisher's exact test to identify significantly enriched biological pathways in lists of differentially expressed genes. Results are visualized as bubble plots comparing pathway enrichment across multiple contrasts.
 
-- Uses **Fisher's exact test** to calculate pathway enrichment significance
-- Supports **multiple pathway databases**: GO, REACTOME, KEGG, MSigDB, and more
-- Handles **multiple species** with automatic ortholog conversion to human genes
-- Provides **flexible gene selection** methods (rank-based or threshold-based)
-- Generates **publication-quality visualizations** (bubble plots and bar charts)
+### Key Features
+
+- **Multi-comparison support**: Compare pathway enrichment across multiple DEG contrasts
+- **Flexible gene selection**: Select genes by rank (t-statistic) or by thresholds (p-value & fold change)
+- **Multiple pathway databases**: GO, REACTOME, KEGG, MSigDB (H, C1-C8), WikiPathways, and custom pathways
+- **Cross-species support**: Human, Mouse, Rat, Macaque, Zebrafish, Rabbit, Drosophila (via ortholog mapping)
+- **Gene symbol updates**: Optional automatic gene name updating for consistency
+- **Customizable visualization**: Control bubble size, color, font sizes, and pathway ordering
 
 ## Input Requirements
 
-### Data Asset: DEG Table
+### Required Data
 
-Attach a data asset containing differential expression results with:
+- **DEG table**: Data frame with gene names, statistics, and comparison metrics
+  - Must contain gene names column
+  - For rank-based selection: t-statistic columns
+  - For threshold-based selection: p-value/adjusted p-value and fold change columns
 
-- **Gene names** (e.g., HGNC symbols)
-- **Statistical measures** (t-statistics, p-values)
-- **Fold changes** (linear or log scale)
+### Column Selection
 
-**Supported formats**: RDS, CSV, TSV
+**Option 1: Automatic (using comparisons parameter)**
+```bash
+--comparisons "B-A,C-A" 
+# Derives: B-A_tstat, B-A_pval, B-A_FC, C-A_tstat, C-A_pval, C-A_FC
+```
 
-**Expected columns** (auto-detected with override options):
-- `Gene`, `gene`, `symbol` (or custom) → Gene names
-- `{comparison}_tstat` → t-statistics for ranking
-- `{comparison}_pval` → p-values for filtering
-- `{comparison}_FC` → fold changes for filtering
-
-### Required Parameters
-
-**Comparison** - Which comparison to analyze (e.g., 'B-A', 'C-A', 'Treatment-Control'). Must match the column prefix in your DEG table.
+**Option 2: Explicit column specification**
+```bash
+--t_statistic_columns "contrast1_tstat,contrast2_tstat"
+--significance_columns "contrast1_pval,contrast2_pval"
+--fold_change_columns "contrast1_FC,contrast2_FC"
+```
 
 ## Usage
 
-### Quick Start (Beginners)
+### Basic Example
 
-1. **Attach your DEG table** as a data asset
-2. **Fill in Basic Settings**:
-   - **Comparison**: e.g., "B-A" (matches your column prefixes)
-   - **Species**: Select from Human, Mouse, Rat, etc.
-   - **Pathway Collections**: Keep default "GO,REACTOME,KEGG" or customize
-3. **Run** - The tool auto-detects columns and uses smart defaults
+```bash
+./run \
+  --input_file /data/deg_results.rds \
+  --gene_names_column "gene_name" \
+  --comparisons "TreatmentB-Control,TreatmentC-Control" \
+  --species "Human" \
+  --collections "H,REACTOME" \
+  --select_by_rank TRUE \
+  --top_pathways 15
+```
 
-### Advanced Usage
+### Gene Selection Methods
 
-#### Column Overrides
+**Method 1: Rank-based (default)**
+```bash
+--select_by_rank TRUE \
+--select_top_percentage TRUE    # Top 10% of genes by |t-statistic|
+# OR
+--select_by_rank TRUE \
+--select_top_percentage FALSE \
+--select_top_genes 500          # Top 500 genes by |t-statistic|
+```
 
-If your data uses non-standard column names, override auto-detection:
+**Method 2: Threshold-based**
+```bash
+--select_by_rank FALSE \
+--significance_threshold 0.05 \
+--fold_change_threshold 1.5
+```
 
-- **Gene Name Column**: e.g., "HGNC_Symbol", "gene_id"
-- **Ranking Column**: e.g., "logFC", "stat"  
-- **Significance Column**: e.g., "padj", "FDR"
-- **Fold Change Column**: e.g., "log2FC", "foldChange"
+### Pathway Collections
 
-#### Gene Selection Methods
+Available collections (comma-separated):
+- `GO`: Gene Ontology
+- `REACTOME`: Reactome pathways
+- `KEGG`: KEGG pathways
+- `H`: MSigDB Hallmark gene sets
+- `C1`-`C8`: MSigDB curated collections
+- `WikiPathways`: WikiPathways database
 
-**Rank-based (Recommended)**
-- Selects top N% or top N genes by t-statistic
-- Better for well-powered bulk RNA-seq experiments
-- Default: Top 10% of ranked genes
+Example: `--collections "H,REACTOME,GO"`
 
-**Threshold-based**
-- Filters by p-value and fold change cutoffs
-- Better for heterogeneous data (e.g., single-cell RNA-seq)
-- Default thresholds: p < 0.05, FC > 1.2
+### Using Custom Pathway Databases
 
-#### Pathway Settings
+You can use your own custom pathway database instead of or in addition to the built-in collections.
 
-- **Minimum Pathway Hits**: Filter out small pathways (default: 5 genes)
-- **P-value Threshold for Output**: Only export significant pathways (default: 0.05)
-- **Use Built-in Gene Universe**: Alternative background gene set
-- **Use FDR P-values**: Use FDR-corrected values instead of raw p-values
+**File Format Requirements:**
 
-#### Visualization Customization
+Your custom pathway file must be in **TSV or CSV format** with two required columns:
 
-- **Number of Pathways to Plot**: Top N pathways per direction (default: 12)
-- **Bubble Plot Variables**: Customize size, color, and sorting
-- **Color Schemes**: Blues, reds, greens, or gradients
-- **Plot Dimensions**: Width and height in inches
+- **Pathway name column**: Contains pathway/gene set names (default: `gene_set_name`)
+- **Gene symbol column**: Contains gene symbols (default: `gene_symbol`)
 
-## Supported Pathway Collections
+**Example format**:
+```
+gene_set_name,gene_symbol
+My_Custom_Pathway_1,TP53
+My_Custom_Pathway_1,BRCA1
+My_Custom_Pathway_1,MYC
+My_Custom_Pathway_2,EGFR
+My_Custom_Pathway_2,KRAS
+```
 
-- **GO**: Gene Ontology (biological processes, molecular functions, cellular components)
-- **REACTOME**: Curated pathway database
-- **KEGG**: Kyoto Encyclopedia of Genes and Genomes
-- **PANTH**: PANTHER pathways
-- **PID**: Pathway Interaction Database
-- **BIOCYC**: BioCyc metabolic pathways
-- **WikiPathways**: Community-curated pathways
-- **H**: MSigDB Hallmark gene sets
-- **C1-C8**: MSigDB curated, motif, computational, oncogenic, immunologic, and cell type gene sets
+**How to Use:**
 
-## Supported Species
+1. Prepare your custom pathway file in the format above (TSV or CSV)
+2. Open the **App Panel** (⚙️ icon) in this capsule
+3. Go to **"Custom Pathways (Optional)"** section
+4. **Custom Pathway File**: Click to upload your file from your local computer
+5. **Pathway Name Column**: Adjust if your column name differs (default: `gene_set_name`)
+6. **Gene Symbol Column**: Adjust if your column name differs (default: `gene_symbol`)
+7. **Pathway Collections**: Leave blank to use *only* custom pathways, or keep filled to use custom + standard collections
+8. Click **Run**
 
-Human, Mouse, Rat, Rabbit, Zebrafish, Macaque, Drosophila
+**Tips:**
+- Gene symbols must match your species or will undergo ortholog conversion
+- You can combine custom pathways with standard collections (GO, REACTOME, etc.)
+- Coming soon: Curated custom pathway databases available as dropdown options
 
-*Non-human genes are automatically converted to human orthologs before analysis.*
+### Visualization Options
 
-## Outputs
+```bash
+--plot_bubble_size "pval"                    # or "fdr", "number_hits"
+--plot_bubble_color "enrichment_score"       # or "net_enrichment_score"
+--top_pathways 10                            # Number of top pathways to display
+--number_of_significant_events 1             # Min significant events across contrasts
+--pathway_axis_label_max_length 100          # Max pathway label length
+--pathway_axis_label_font_size 5             # Pathway label font size
+```
 
-### Results File: `l2p_results.csv`
+## Key Parameters
 
-A comprehensive table including:
-- **Pathway name** and **category**
-- **Direction** (up/downregulated)
-- **Number of hits** (genes in pathway)
-- **Percent hits** (proportion of pathway genes)
-- **Enrichment score**
-- **P-value** (Fisher's exact test)
-- **FDR** (Benjamini-Hochberg corrected)
-- **Gene lists** (genes found in each pathway)
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `input_file` | string | required | Input DEG table (RDS, CSV, or TSV) |
+| `gene_names_column` | string | required | Column with gene names |
+| `comparisons` | string | required | Comma-separated comparison IDs |
+| `species` | string | "Mouse" | Species for ortholog mapping |
+| `collections` | string | "H" | Comma-separated pathway collections |
+| `select_by_rank` | boolean | TRUE | Use rank-based gene selection |
+| `top_pathways` | integer | 10 | Top pathways to compare across groups |
+| `significance_threshold` | numeric | 0.05 | P-value threshold (if not rank-based) |
+| `fold_change_threshold` | numeric | 1.2 | FC threshold (if not rank-based) |
+| `output_plot` | string | /results/l2p_multi_plot.png | Output plot path |
+| `output_results` | string | /results/l2p_multi_results.csv | Output results path |
 
-### Visualization: `l2p_plots.png`
+## Complete Parameter Reference
 
-Multi-panel figure with:
-- **Bubble plots**: Size = number of hits, Color = p-value, X-axis = percent hits
-- **Bar charts**: -log₁₀(p-value) for easy interpretation
-- Separate panels for upregulated and downregulated pathways
+### Basic Settings
+- **`input_file`**: Path to DEG table (RDS, CSV, TSV)
+- **`gene_names_column`**: Column containing gene symbols (default: "Gene")
+- **`comparisons`**: Comma-separated comparison IDs (e.g., "B-A, C-A, B-C")
+- **`species`**: Human, Mouse, Rat, Macaque, Zebrafish, Rabbit, Drosophila (default: "Mouse")
+- **`collections`**: Pathway collections - GO, REACTOME, KEGG, H, C1-C8, WikiPathways (default: "H")
 
-## Algorithm Details
+### Column Overrides (Advanced)
+- **`t_statistic_columns`**: Override auto-detected t-statistic columns (comma-separated)
+- **`significance_columns`**: Override auto-detected p-value columns (comma-separated)
+- **`fold_change_columns`**: Override auto-detected fold change columns (comma-separated)
 
-1. **Gene Selection**: Ranks genes by t-statistic or filters by p-value/fold change thresholds
-2. **Pathway Enrichment**: Fisher's exact test for over-representation
-3. **Multiple Testing Correction**: Benjamini-Hochberg FDR adjustment
-4. **Ortholog Mapping**: Non-human genes converted to human via built-in mappings
-5. **Visualization**: Interactive bubble plots and bar charts with ggplot2
+### Gene Selection Method
+- **`select_by_rank`**: Use rank-based selection (TRUE) or thresholds (FALSE) (default: TRUE)
+- **`select_top_percentage`**: Select top 10% (TRUE) or fixed number (FALSE) (default: TRUE)
+- **`select_top_genes`**: Number of top genes if not using percentage (default: 500)
+- **`significance_threshold`**: P-value threshold for threshold-based selection (default: 0.05)
+- **`fold_change_threshold`**: Fold change threshold for threshold-based selection (default: 1.2)
+- **`minimum_number_of_deg_genes`**: Minimum DEG genes required per comparison (default: 100)
 
-## Tips & Troubleshooting
+### Pathway Filtering
+- **`top_pathways`**: Number of top pathways to compare across groups (default: 10)
+- **`number_of_significant_events`**: Minimum comparisons where pathway must be significant (default: 1)
+- **`maximum_pathways_to_plot`**: Maximum pathways displayed in bubble plot (default: 15)
+- **`update_genes`**: Update gene symbols to current nomenclature (default: TRUE)
 
-### If you get too few enriched pathways:
-- Lower the **Significance Threshold** (e.g., 0.10 instead of 0.05)
-- Increase the **Fold Change Threshold** (e.g., 1.5 instead of 1.2)
-- Add more **Pathway Collections**
-- Try **threshold-based selection** if using rank-based
+### Visualization Options
+- **`plot_bubble_size`**: Bubble size metric - pval, fdr, or number_hits (default: "pval")
+- **`plot_bubble_color`**: Bubble color metric - enrichment_score, net_enrichment_score, or percent_gene_hits_per_pathway (default: "enrichment_score")
+- **`pathway_axis_label_max_length`**: Max characters for pathway labels (default: 45)
+- **`pathway_axis_label_font_size`**: Font size for pathway labels (default: 5)
 
-### If you get too many pathways:
-- Increase **Minimum Pathway Hits** (e.g., 10 instead of 5)
-- Lower **P-value Threshold for Output** (e.g., 0.01 instead of 0.05)
-- Use **FDR p-values** for stricter correction
+### Custom Pathways (Optional)
+- **`custom_pathways`**: Path to custom pathway file (TSV/CSV format)
+- **`custom_pathway_name_column`**: Column with pathway names in custom file (default: "gene_set_name")
+- **`custom_pathway_gene_column`**: Column with gene symbols in custom file (default: "gene_symbol")
 
-### If column auto-detection fails:
-- Check the **Available columns** message in the output log
-- Manually specify columns in **Column Overrides** section
-- Ensure your comparison prefix exactly matches (case-sensitive)
+### Advanced Pathway Filtering
+- **`use_built_in_gene_universe`**: Use built-in gene universe instead of detected genes (default: FALSE)
+- **`minimum_pathway_hit_count`**: Minimum genes required per pathway (default: 5)
+- **`pathway_size_limit`**: Maximum pathway size - larger pathways excluded (default: 500)
+- **`p_value_limit`**: P-value cutoff for including pathways (default: 0.05)
+- **`use_fdr_for_significance`**: Use FDR instead of raw p-values (default: FALSE)
+
+### Advanced Plot Customization
+- **`plot_bubble_max_color`**: Maximum value for color scale gradient (default: 1)
+- **`pathways_to_remove`**: Comma-separated pathway names to exclude from plot
+- **`rename_groups`**: Comma-separated new names for comparison groups
+- **`vertical_line_placement`**: Comma-separated positions for vertical separator lines
+- **`use_panel_plot`**: Use panel layout splitting comparisons into separate panels (default: FALSE)
+- **`use_dynamic_pathway_font_size`**: Auto-adjust pathway label font size (default: TRUE)
+- **`custom_pathway_order`**: Comma-separated pathway names to define custom Y-axis order
+- **`column_spacing`**: Spacing between comparison columns (default: 0.5)
+
+### Axis Customization (Optional)
+- **`x_axis_title`**: Custom title for x-axis (comparison axis)
+- **`y_axis_title`**: Custom title for y-axis (pathway axis)
+- **`x_axis_title_font_size`**: Font size for x-axis title (default: 14)
+- **`y_axis_title_font_size`**: Font size for y-axis title (default: 14)
+- **`x_axis_tick_font_size`**: Font size for x-axis tick labels (default: 12)
+- **`x_axis_tick_labels`**: Comma-separated custom labels for x-axis ticks
+- **`y_axis_tick_labels`**: Comma-separated custom labels for y-axis ticks
+
+### Output Settings
+- **`output_plot`**: File path for output bubble plot (default: /results/l2p_multi_plot.png)
+- **`output_results`**: File path for output results table (default: /results/l2p_multi_results.csv)
+- **`plot_width`**: Plot width in inches (default: 14)
+- **`plot_height`**: Plot height in inches (default: 16)
+
+## Output Files
+
+1. **Bubble Plot** (`l2p_multi_plot.png`)
+   - Bubble size: Significance (-log10 p-value or FDR)
+   - Bubble color: Enrichment score or net enrichment score
+   - Y-axis: Pathway names
+   - X-axis: Comparison groups
+
+2. **Results Table** (`l2p_multi_results.csv`)
+   - Pathway name, category, direction
+   - Hit counts, enrichment scores
+   - P-values, FDR
+   - Gene lists (original and updated symbols)
+
+## Advanced Features
+
+### Custom Pathway Order
+Manually specify pathway display order in the plot.
+
+### Dynamic Font Sizing
+Automatically adjusts pathway label font size based on number of pathways.
+
+### Vertical Separators
+Add visual separators between comparison groups.
+
+### Panel Plots
+Divide plot into panels by pathway collection (not recommended for many collections).
+
+## Reproducibility
+
+- Uses MOSuite R v0.3.2 base image with l2p and l2psupp packages
+- Gene symbol updating uses latest databases (optional via `--update_genes`)
+- All parameters logged to output for provenance
 
 ## References
 
-- **L2P package**: https://github.com/ccbr/l2p
-- **CCBR**: CCR Collaborative Bioinformatics Resource
-- **Contact**: NCICCBRNIDAP@mail.nih.gov
-
-## Version History
-
-- **v1.0**: Initial release with progressive disclosure UI and smart column detection
-
----
-
-**OMIX Collection** | **Bioinformatics** | **Pathway Analysis** | **R**
+- L2P package: https://github.com/ccbr/l2p
+- Original version: L2P Multi v93
+- Contact: NCICCBRNIDAP@mail.nih.gov

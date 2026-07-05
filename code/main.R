@@ -452,6 +452,77 @@ parse_axis_title <- function(x, title_font_size, arg_name) {
   x
 }
 
+load_custom_pathways <- function(path, pathway_name_column, gene_column) {
+  if (is.null(path)) {
+    return(NULL)
+  }
+
+  path <- trimws(as.character(path[[1]]))
+  if (!nzchar(path) || path %in% c("NULL", "NA")) {
+    return(NULL)
+  }
+
+  if (!file.exists(path)) {
+    stop(sprintf("ERROR: Custom pathway file not found: %s", path))
+  }
+
+  cat(sprintf("\nLoading custom pathways from: %s\n", path))
+  custom_pathways <- if (grepl("\\.rds$", path, ignore.case = TRUE)) {
+    readRDS(path)
+  } else if (grepl("\\.csv$", path, ignore.case = TRUE)) {
+    utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  } else if (grepl("\\.tsv$|\\.txt$", path, ignore.case = TRUE)) {
+    utils::read.delim(path, stringsAsFactors = FALSE, check.names = FALSE)
+  } else {
+    stop(
+      paste0(
+        "ERROR: Custom pathway file must be .rds, .csv, .tsv, or .txt. ",
+        "Received: ",
+        path
+      )
+    )
+  }
+
+  if (is.data.frame(custom_pathways)) {
+    cat(sprintf(
+      "Loaded custom pathway table with %d rows and %d columns.\n",
+      nrow(custom_pathways),
+      ncol(custom_pathways)
+    ))
+    cat(sprintf(
+      "Custom pathway columns: %s\n",
+      paste(colnames(custom_pathways), collapse = ", ")
+    ))
+
+    required_columns <- c(pathway_name_column, gene_column)
+    missing_columns <- setdiff(required_columns, colnames(custom_pathways))
+    if (length(missing_columns) > 0) {
+      stop(sprintf(
+        paste0(
+          "ERROR: Custom pathway file is missing required column(s): %s. ",
+          "Set `custom_pathway_name_column` and ",
+          "`custom_pathway_gene_column` to match the file."
+        ),
+        paste(missing_columns, collapse = ", ")
+      ))
+    }
+  } else if (is.list(custom_pathways)) {
+    cat(sprintf(
+      "Loaded custom pathway list with %d pathway entries.\n",
+      length(custom_pathways)
+    ))
+  } else {
+    stop(
+      paste0(
+        "ERROR: Custom pathway file must contain either a data frame or ",
+        "an l2p-formatted list."
+      )
+    )
+  }
+
+  custom_pathways
+}
+
 comparisons_vec <- parse_comma_sep(opt$comparisons)
 t_stat_cols <- parse_comma_sep(opt$t_statistic_columns)
 sig_cols <- parse_comma_sep(opt$significance_columns)
@@ -511,13 +582,11 @@ cat("\n")
 log_time("Starting L2P Multi analysis")
 
 # Parse advanced parameters that may be NULL or comma-separated
-custom_pathways_param <- if (
-  !is.null(opt$custom_pathways) && opt$custom_pathways != ""
-) {
-  opt$custom_pathways
-} else {
-  NULL
-}
+custom_pathways_param <- load_custom_pathways(
+  opt$custom_pathways,
+  opt$custom_pathway_name_column,
+  opt$custom_pathway_gene_column
+)
 pathways_to_remove_vec <- if (
   !is.null(opt$pathways_to_remove) && opt$pathways_to_remove != ""
 ) {
