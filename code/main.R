@@ -8,10 +8,25 @@ cat("\n======================================\n")
 cat("L2P Multi-Comparison Analysis\n")
 cat("======================================\n")
 cat(sprintf("R version: %s\n", R.version.string))
-cat(sprintf("l2p: %s\n", as.character(packageVersion("l2p"))))
-cat(sprintf("l2psupp: %s\n", as.character(packageVersion("l2psupp"))))
-cat(sprintf("ggplot2: %s\n", as.character(packageVersion("ggplot2"))))
-cat(sprintf("dplyr: %s\n", as.character(packageVersion("dplyr"))))
+cat(sprintf("l2p package: %s\n", as.character(packageVersion("l2p"))))
+cat(sprintf("l2psupp package: %s\n", as.character(packageVersion("l2psupp"))))
+
+# Try to detect MSigDB version
+msigdb_version_detected <- FALSE
+tryCatch({
+  if (exists("msigdb_version", where = asNamespace("l2p"))) {
+    cat(sprintf("MSigDB version: %s (from l2p)\n", get("msigdb_version", envir = asNamespace("l2p"))))
+    msigdb_version_detected <- TRUE
+  } else if (exists("msigdb_version", where = asNamespace("l2psupp"))) {
+    cat(sprintf("MSigDB version: %s (from l2psupp)\n", get("msigdb_version", envir = asNamespace("l2psupp"))))
+    msigdb_version_detected <- TRUE
+  }
+}, error = function(e) {})
+
+if (!msigdb_version_detected) {
+  cat(sprintf("Pathway databases: Bundled in l2psupp v%s\n", as.character(packageVersion("l2psupp"))))
+  cat("  Pathway database details can be found at https://github.com/ccbr/l2p\n")
+}
 cat("======================================\n\n")
 
 # ===== DEBUG TIMING UTILITIES =====

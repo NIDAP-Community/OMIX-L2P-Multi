@@ -3,9 +3,7 @@
 #' @description
 #' Runs pathway over-representation analysis using L2P (List to pathway,
 #' https://github.com/ccbr/l2p) comparing significant pathways from several
-#' differentially expressed gene (DEG) lists. Final Potomac Compatible Version:
-#' v70. Final Sugarloaf V1: v84. View Documentation
-#'
+#' differentially expressed gene (DEG) lists.By the 
 #' @details
 #' Contact CCBR at \email{NCICCBRNIDAP@@mail.nih.gov} if you encounter problems.
 #'
@@ -97,6 +95,9 @@
 #' RNA-seq dataset or single cell RNA-Seq with few DEG genes, we recommend
 #' setting this to 1.2 initially. Threshold is for fold-change rather than
 #' log fold-change. Default: \code{1.2}.
+#' @param minimum_number_of_deg_genes
+#' Numeric. Desired minimum number of selected genes per up/down list before a
+#' warning is printed. Default: \code{100}.
 #' @param plot_bubble_size
 #' Character. One of ['pval', 'fdr', 'number_hits']. For the size of the
 #' bubble in the plot, use either -log10(pval), -log10(fdr pval) number of
@@ -202,8 +203,10 @@
 #' \code{0.5}.
 #' @param export_results_file
 #' Character. Optional output file path for saving the returned results as CSV.
-#' Defaults to \code{file.path(getwd(), "l2p_multi_v93_results.csv")}. Set
-#' to \code{NULL} to disable results export.
+#' A companion provenance CSV is written with \code{_provenance} appended to
+#' the basename. Defaults to
+#' \code{file.path(getwd(), "l2p_multi_v93_results.csv")}. Set to
+#' \code{NULL} to disable results and provenance export.
 #'
 #' @return A data frame of L2P pathway enrichment results across all
 #' contrasts, including pathway name, category, direction, hit counts,
@@ -236,6 +239,7 @@ l2p_multi <- function(
   select_top_genes = 500,
   significance_threshold = 0.05,
   fold_change_threshold = 1.2,
+  minimum_number_of_deg_genes = 100,
   plot_bubble_size = "pval",
   plot_bubble_color = "enrichment_score",
   plot_bubble_max_color = 1,
@@ -355,6 +359,10 @@ l2p_multi <- function(
     }
 
     trimws(x)
+  }
+
+  is_log_fold_change_column <- function(x) {
+    grepl("logFC|log2FC|avg_log2FC", x)
   }
 
   optional_axis_title <- function(x, arg_name) {
@@ -518,6 +526,16 @@ l2p_multi <- function(
     )
   }
 
+  minimum_number_of_deg_genes <- as.numeric(minimum_number_of_deg_genes)[1]
+  if (
+    !is.finite(minimum_number_of_deg_genes) ||
+      minimum_number_of_deg_genes < 0
+  ) {
+    stop(
+      "ERROR: `minimum_number_of_deg_genes` must be a non-negative number."
+    )
+  }
+
   if (is.null(maximum_pathways_to_plot)) {
     maximum_pathways_to_plot <- Inf
   } else {
@@ -673,7 +691,7 @@ l2p_multi <- function(
     }
 
     FCgroups <- gsub(
-      "_FC|_logFC|avg_logFC_|avg_log2FC_",
+      "_FC|_logFC|_log2FC|avg_logFC_|avg_log2FC_",
       "",
       fold_change_columns
     )
@@ -691,7 +709,7 @@ l2p_multi <- function(
       )
     }
 
-    fc_is_log <- grepl("logFC|avg_log2FC", fold_change_columns)
+    fc_is_log <- is_log_fold_change_column(fold_change_columns)
     fc_is_linear <- grepl("_FC", fold_change_columns)
     if (!all(fc_is_log | fc_is_linear)) {
       stop(
@@ -789,6 +807,78 @@ l2p_multi <- function(
   ## --------- ##
   ## Functions ##
   ## --------- ##
+
+  collapse_for_provenance <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+      return("")
+    }
+
+    paste(as.character(x), collapse = ";")
+  }
+
+  provenance_file_from_results <- function(results_file) {
+    ext <- tools::file_ext(results_file)
+    if (!nzchar(ext)) {
+      ext <- "csv"
+    }
+    paste0(tools::file_path_sans_ext(results_file), "_provenance.", ext)
+  }
+
+  write_provenance_csv <- function(provenance, results_file) {
+    if (is.null(results_file) || !nzchar(results_file)) {
+      return(invisible(NULL))
+    }
+
+    provenance_file <- provenance_file_from_results(results_file)
+    provenance_tbl <- data.frame(
+      field = names(provenance),
+      value = vapply(provenance, collapse_for_provenance, character(1)),
+      stringsAsFactors = FALSE
+    )
+    utils::write.csv(provenance_tbl, provenance_file, row.names = FALSE)
+    provenance_file
+  }
+
+  analysis_provenance <- list(
+    analysis_template_name = "L2P_Multi",
+    analysis_template_version = "2.0",
+    analysis_run_timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
+    analysis_r_version = R.version.string,
+    analysis_l2p_version = as.character(utils::packageVersion("l2p")),
+    analysis_l2psupp_version = as.character(utils::packageVersion("l2psupp")),
+    analysis_species = species,
+    analysis_gene_column = collapse_for_provenance(gene_names_column),
+    analysis_comparisons = collapse_for_provenance(comparisons),
+    analysis_rank_columns = collapse_for_provenance(t_statistic_columns),
+    analysis_significance_columns = collapse_for_provenance(significance_columns),
+    analysis_fold_change_columns = collapse_for_provenance(fold_change_columns),
+    analysis_collections_to_include = collapse_for_provenance(
+      collections_to_include
+    ),
+    analysis_custom_pathways_used = !is.null(custom_pathways_list),
+    analysis_custom_pathway_count = if (is.null(custom_pathways_list)) {
+      0L
+    } else {
+      length(custom_pathways_list)
+    },
+    analysis_select_by_rank = select_by_rank,
+    analysis_select_top_percentage_of_genes = select_top_percentage_of_genes,
+    analysis_select_top_genes = select_top_genes,
+    analysis_significance_threshold = significance_threshold,
+    analysis_fold_change_threshold = fold_change_threshold,
+    analysis_update_genes = update_genes,
+    analysis_use_built_in_gene_universe = use_built_in_gene_universe,
+    analysis_minimum_number_of_deg_genes = minimum_number_of_deg_genes,
+    analysis_minimum_pathway_hit_count = minimum_pathway_hit_count,
+    analysis_pathway_size_limit = pathway_size_limit,
+    analysis_p_value_limit = p_value_limit,
+    analysis_use_fdr_for_significance = use_fdr_for_significance,
+    analysis_top_pathways = top_pathways,
+    analysis_number_of_significant_events = number_of_significant_events,
+    analysis_maximum_pathways_to_plot = maximum_pathways_to_plot,
+    analysis_export_plot_file = collapse_for_provenance(export_plot_file),
+    analysis_export_results_file = collapse_for_provenance(export_results_file)
+  )
 
   dynamicFontsize <-
     function(
@@ -1030,8 +1120,12 @@ l2p_multi <- function(
     }
   } else {
     compnum <- length(fold_change_columns)
-    if (sum(grepl("logFC|avg_log2FC", fold_change_columns)) == compnum) {
-      groups <- gsub("_logFC|avg_log2FC_", "", fold_change_columns)
+    if (sum(is_log_fold_change_column(fold_change_columns)) == compnum) {
+      groups <- gsub(
+        "_logFC|_log2FC|avg_logFC_|avg_log2FC_",
+        "",
+        fold_change_columns
+      )
       for (i in 1:compnum) {
         deg_table %>%
           dplyr::select(
@@ -1095,14 +1189,17 @@ l2p_multi <- function(
   }))
   names(genelistnums) <- gsub("1$", "_upregulated", names(genelistnums))
   names(genelistnums) <- gsub("2$", "_downregulated", names(genelistnums))
-  lowgenenums <- names(genelistnums)[genelistnums < 100]
-  if (sum(genelistnums < 100) > 0) {
+  lowgenenums <- names(genelistnums)[
+    genelistnums < minimum_number_of_deg_genes
+  ]
+  if (sum(genelistnums < minimum_number_of_deg_genes) > 0) {
     warning(sprintf(
       paste0(
         "The size of these genelists are below a desired size ",
-        "threshold of 100: Try loosening the criteria for p-values ",
+        "threshold of %g: Try loosening the criteria for p-values ",
         "up to 0.15 and/or fold change to 1.2"
-      )
+      ),
+      minimum_number_of_deg_genes
     ))
     print(lowgenenums)
   }
@@ -1401,7 +1498,11 @@ l2p_multi <- function(
   if (select_by_rank == TRUE) {
     grouplevel <- gsub("_tstat", "", t_statistic_columns)
   } else {
-    grouplevel <- gsub("_FC|_logFC|avg_log2FC_", "", fold_change_columns)
+    grouplevel <- gsub(
+      "_FC|_logFC|_log2FC|avg_logFC_|avg_log2FC_",
+      "",
+      fold_change_columns
+    )
   }
   pathall$group <- factor(pathall$group, levels = grouplevel)
   pathall %>% dplyr::filter(!pathway_name %in% pathways_to_remove) -> pathall
@@ -1803,6 +1904,30 @@ l2p_multi <- function(
 
   if (!is.null(export_results_file) && nzchar(export_results_file)) {
     utils::write.csv(pathall, export_results_file, row.names = FALSE)
+    final_analysis_provenance <- c(
+      analysis_provenance,
+      list(
+        analysis_input_gene_count = length(gene_universe_orig),
+        analysis_selected_gene_count = length(selected_gene_universe),
+        analysis_selected_gene_counts_by_list = paste(
+          names(genelistnums),
+          genelistnums,
+          sep = "=",
+          collapse = ";"
+        ),
+        analysis_gene_universe_count = if (is.null(gene_universe)) {
+          "built-in"
+        } else {
+          length(gene_universe)
+        },
+        analysis_result_row_count = nrow(pathall)
+      )
+    )
+    provenance_file <- write_provenance_csv(
+      final_analysis_provenance,
+      export_results_file
+    )
+    cat(sprintf("\nSaved provenance to %s\n", provenance_file))
   }
 
   return(pathall)
