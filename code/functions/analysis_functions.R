@@ -3,7 +3,9 @@
 #' @description
 #' Runs pathway over-representation analysis using L2P (List to pathway,
 #' https://github.com/ccbr/l2p) comparing significant pathways from several
-#' differentially expressed gene (DEG) lists.By the 
+#' differentially expressed gene (DEG) lists. Final Potomac Compatible Version:
+#' v70. Final Sugarloaf V1: v84. View Documentation
+#'
 #' @details
 #' Contact CCBR at \email{NCICCBRNIDAP@@mail.nih.gov} if you encounter problems.
 #'
@@ -177,6 +179,12 @@
 #' @param y_axis_title
 #' Character. Optional y-axis title for the bubble plot. Set to \code{NULL}
 #' or an empty string to omit. Default: \code{NULL}.
+#' @param x_axis_title_font_size
+#' Numeric. Font size for the x-axis title. Default: \code{14}.
+#' @param y_axis_title_font_size
+#' Numeric. Font size for the y-axis title. Default: \code{14}.
+#' @param x_axis_tick_font_size
+#' Numeric. Font size for the x-axis tick labels. Default: \code{14}.
 #' @param x_axis_tick_labels
 #' Character vector. Optional replacement labels for x-axis ticks, provided
 #' in the same order as the plotted groups. If omitted, original group names
@@ -259,6 +267,9 @@ l2p_multi <- function(
   custom_pathway_order = NULL,
   x_axis_title = NULL,
   y_axis_title = NULL,
+  x_axis_title_font_size = 14,
+  y_axis_title_font_size = 14,
+  x_axis_tick_font_size = 14,
   x_axis_tick_labels = NULL,
   y_axis_tick_labels = NULL,
   export_plot_file = file.path(getwd(), "l2p_multi_v93_plot.png"),
@@ -412,6 +423,37 @@ l2p_multi <- function(
     x
   }
 
+  numeric_font_size <- function(x, arg_name) {
+    x <- as.numeric(x)[1]
+    if (!is.finite(x) || x <= 0) {
+      stop(sprintf(
+        "ERROR: `%s` must be a positive numeric font size.",
+        arg_name
+      ))
+    }
+
+    x
+  }
+
+  numeric_positive_integer <- function(x, arg_name) {
+    x <- as.numeric(x)[1]
+    if (!is.finite(x) || x <= 0) {
+      stop(sprintf(
+        "ERROR: `%s` must be a positive number.",
+        arg_name
+      ))
+    }
+
+    floor(x)
+  }
+
+  dynamic_wrap_length <- function(max_length, font_size) {
+    reference_font_size <- 8
+    adjusted_length <- floor(max_length * reference_font_size / font_size)
+
+    min(max_length, max(15, adjusted_length))
+  }
+
   resolve_gene_names_column <- function(deg_table, gene_column) {
     provided <- ""
     if (
@@ -553,6 +595,26 @@ l2p_multi <- function(
 
   x_axis_title <- optional_axis_title(x_axis_title, "x_axis_title")
   y_axis_title <- optional_axis_title(y_axis_title, "y_axis_title")
+  x_axis_title_font_size <- numeric_font_size(
+    x_axis_title_font_size,
+    "x_axis_title_font_size"
+  )
+  y_axis_title_font_size <- numeric_font_size(
+    y_axis_title_font_size,
+    "y_axis_title_font_size"
+  )
+  pathway_axis_label_max_length <- numeric_positive_integer(
+    pathway_axis_label_max_length,
+    "pathway_axis_label_max_length"
+  )
+  pathway_axis_label_font_size <- numeric_font_size(
+    pathway_axis_label_font_size,
+    "pathway_axis_label_font_size"
+  )
+  x_axis_tick_font_size <- numeric_font_size(
+    x_axis_tick_font_size,
+    "x_axis_tick_font_size"
+  )
   x_axis_tick_labels <- optional_axis_tick_labels(
     x_axis_tick_labels,
     "x_axis_tick_labels"
@@ -840,8 +902,8 @@ l2p_multi <- function(
   }
 
   analysis_provenance <- list(
-    analysis_template_name = "L2P_Multi",
-    analysis_template_version = "2.0",
+    analysis_template_name = "L2P_Multi_v93",
+    analysis_template_version = "v93",
     analysis_run_timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
     analysis_r_version = R.version.string,
     analysis_l2p_version = as.character(utils::packageVersion("l2p")),
@@ -876,6 +938,9 @@ l2p_multi <- function(
     analysis_top_pathways = top_pathways,
     analysis_number_of_significant_events = number_of_significant_events,
     analysis_maximum_pathways_to_plot = maximum_pathways_to_plot,
+    analysis_x_axis_title_font_size = x_axis_title_font_size,
+    analysis_y_axis_title_font_size = y_axis_title_font_size,
+    analysis_x_axis_tick_font_size = x_axis_tick_font_size,
     analysis_export_plot_file = collapse_for_provenance(export_plot_file),
     analysis_export_results_file = collapse_for_provenance(export_results_file)
   )
@@ -1535,13 +1600,35 @@ l2p_multi <- function(
   }
 
   pathall2 <- pathall
+
+  if (use_dynamic_pathway_font_size) {
+    npathways <- length(unique(pathall2$pathway_name))
+    fsize <- dynamicFontsize(npathways)
+    cat(sprintf("\nPathway Axis Label Font Size set to %g\n\n", fsize))
+    pathway_axis_label_font_size <- fsize
+  }
+
+  effective_pathway_axis_label_max_length <- dynamic_wrap_length(
+    pathway_axis_label_max_length,
+    pathway_axis_label_font_size
+  )
+  if (effective_pathway_axis_label_max_length != pathway_axis_label_max_length) {
+    cat(sprintf(
+      paste0(
+        "\nPathway Axis Label Max Length set to %d after font-size ",
+        "adjustment\n\n"
+      ),
+      effective_pathway_axis_label_max_length
+    ))
+  }
+
   pathall2$pathway_name2 <- str_to_upper(pathall2$pathway_name)
   pathall2$pathway_name2 <- gsub("_", " ", pathall2$pathway_name2)
   pathall2 %>%
     dplyr::mutate(
       pathway_name2 = stringr::str_wrap(
         pathway_name2,
-        pathway_axis_label_max_length
+        effective_pathway_axis_label_max_length
       )
     ) -> pathall2
 
@@ -1572,7 +1659,7 @@ l2p_multi <- function(
     y_label_names <- names(y_axis_tick_labels)
     y_axis_tick_labels <- stringr::str_wrap(
       y_axis_tick_labels,
-      pathway_axis_label_max_length
+      effective_pathway_axis_label_max_length
     )
     if (!is.null(y_label_names)) {
       names(y_axis_tick_labels) <- y_label_names
@@ -1686,13 +1773,6 @@ l2p_multi <- function(
   col1 <- sym(plot_bubble_size)
   col2 <- sym(plot_bubble_color)
 
-  if (use_dynamic_pathway_font_size) {
-    npathways <- length(unique(pathall2$pathway_name))
-    fsize <- dynamicFontsize(npathways)
-    cat(sprintf("\nPathway Axis Label Font Size set to %g\n\n", fsize))
-    pathway_axis_label_font_size <- fsize
-  }
-
   group_levels <- levels(pathall2$group)
   effective_column_spacing <- column_spacing
 
@@ -1787,10 +1867,16 @@ l2p_multi <- function(
           angle = 90,
           hjust = 1,
           colour = "black",
-          size = 12
+          size = x_axis_tick_font_size
         ),
-        axis.title.x = element_text(size = 14, margin = margin(t = 8)),
-        axis.title.y = element_text(size = 14, margin = margin(r = 8)),
+        axis.title.x = element_text(
+          size = x_axis_title_font_size,
+          margin = margin(t = 8)
+        ),
+        axis.title.y = element_text(
+          size = y_axis_title_font_size,
+          margin = margin(r = 8)
+        ),
         axis.text.y = element_text(
           colour = "black",
           size = pathway_axis_label_font_size,
@@ -1859,10 +1945,16 @@ l2p_multi <- function(
           angle = 90,
           hjust = 1,
           colour = "black",
-          size = 12
+          size = x_axis_tick_font_size
         ),
-        axis.title.x = element_text(size = 14, margin = margin(t = 8)),
-        axis.title.y = element_text(size = 14, margin = margin(r = 8)),
+        axis.title.x = element_text(
+          size = x_axis_title_font_size,
+          margin = margin(t = 8)
+        ),
+        axis.title.y = element_text(
+          size = y_axis_title_font_size,
+          margin = margin(r = 8)
+        ),
         axis.text.y = element_text(
           colour = "black",
           size = pathway_axis_label_font_size,

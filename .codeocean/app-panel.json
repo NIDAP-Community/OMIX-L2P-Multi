@@ -48,8 +48,8 @@
 		},
 		{
 			"id": "axis_labeling",
-			"name": "Axis Labeling (Optional)",
-			"help_text": "Customize axis titles and tick labels"
+			"name": "Axis Customization (Optional)",
+			"help_text": "Customize axis titles, labels, and font sizes"
 		},
 		{
 			"id": "output",
@@ -59,7 +59,7 @@
 	],
 	"parameters": [
 		{
-			"id": "tIEATYwVLzzMPY2j",
+			"id": "mya7LsbandlcWrlj",
 			"category": "basic",
 			"name": "Input DEG Table",
 			"param_name": "input_file",
@@ -69,7 +69,7 @@
 			"default_value": "/data/deg_table/var_DEGAnalysis.rds"
 		},
 		{
-			"id": "FtbqTOhSqYIrue7I",
+			"id": "HE9ghw03d1RDLVIs",
 			"category": "basic",
 			"name": "Gene Names Column",
 			"param_name": "gene_names_column",
@@ -79,7 +79,7 @@
 			"default_value": "Gene"
 		},
 		{
-			"id": "Tt8fNtAO8Vx4muZu",
+			"id": "eEEOelGCQNNJ6qhD",
 			"category": "basic",
 			"name": "Comparisons",
 			"param_name": "comparisons",
@@ -89,14 +89,14 @@
 			"default_value": "B-A, C-A, B-C"
 		},
 		{
-			"id": "od5ep8encMXhN27P",
+			"id": "V2V0noje6yNIYSvd",
 			"category": "basic",
 			"name": "Species",
 			"param_name": "species",
 			"help_text": "Species for ortholog mapping. Non-human genes are converted to human before L2P analysis",
 			"type": "list",
 			"value_type": "string",
-			"default_value": "Human",
+			"default_value": "Mouse",
 			"extra_data": [
 				"Human",
 				"Mouse",
@@ -108,17 +108,17 @@
 			]
 		},
 		{
-			"id": "sbu03vbS2ETIjpGQ",
+			"id": "Lrlqh8KJUlDz9LcA",
 			"category": "basic",
 			"name": "Pathway Collections",
 			"param_name": "collections",
 			"help_text": "Comma-separated pathway collections: GO, REACTOME, KEGG, H (Hallmark), C1-C8 (MSigDB), WikiPathways",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "GO,REACTOME,KEGG"
+			"default_value": "H"
 		},
 		{
-			"id": "AZEUZixxor5oJQLf",
+			"id": "pFrpiViUbUdXaOms",
 			"category": "columns",
 			"name": "T-Statistic Columns",
 			"param_name": "t_statistic_columns",
@@ -127,7 +127,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "LWkSIyJCVXijshfA",
+			"id": "3n41pY6sQEAH6pkr",
 			"category": "columns",
 			"name": "Significance Columns",
 			"param_name": "significance_columns",
@@ -136,7 +136,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "6pe5i7YIrsD6goF0",
+			"id": "oYkpeGlNQJz55XdJ",
 			"category": "columns",
 			"name": "Fold Change Columns",
 			"param_name": "fold_change_columns",
@@ -145,7 +145,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "ALezLGDO9g3cueev",
+			"id": "EZuCXy48hOo5I417",
 			"category": "gene_selection",
 			"name": "Select Genes By Rank",
 			"param_name": "select_by_rank",
@@ -155,7 +155,7 @@
 			"default_value": "TRUE"
 		},
 		{
-			"id": "k0LS5Oze71oE16oB",
+			"id": "CXX6zbaqddrPUuDX",
 			"category": "gene_selection",
 			"name": "Select Top Percentage",
 			"param_name": "select_top_percentage",
@@ -165,7 +165,7 @@
 			"default_value": "TRUE"
 		},
 		{
-			"id": "C3M4lBhVlvXWkba8",
+			"id": "pWAdiGnaJhIHWqEa",
 			"category": "gene_selection",
 			"name": "Number of Top Genes",
 			"param_name": "select_top_genes",
@@ -176,7 +176,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "sOdJ5IX1slbWHk8S",
+			"id": "mo5jU1pLub8cnmtt",
 			"category": "gene_selection",
 			"name": "P-value Threshold",
 			"param_name": "significance_threshold",
@@ -188,7 +188,7 @@
 			"maximum": 1
 		},
 		{
-			"id": "wNPdsIqo6QLVXq37",
+			"id": "MYJiGZv2IdS0lhQQ",
 			"category": "gene_selection",
 			"name": "Fold Change Threshold",
 			"param_name": "fold_change_threshold",
@@ -199,7 +199,18 @@
 			"minimum": 1
 		},
 		{
-			"id": "LPSG6GpUpecXsZyS",
+			"id": "Lrb1k35EC5MMKbBf",
+			"category": "gene_selection",
+			"name": "Minimum DEG Genes",
+			"param_name": "minimum_number_of_deg_genes",
+			"help_text": "Minimum number of DEG genes required per comparison to proceed with analysis",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "100",
+			"minimum": 1
+		},
+		{
+			"id": "lFFPgm8fHrJ6PgyF",
 			"category": "pathway_filtering",
 			"name": "Top Pathways to Compare",
 			"param_name": "top_pathways",
@@ -210,7 +221,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "yn364WpmkiHGOfRN",
+			"id": "Sjtj6lFBDS3ve4lG",
 			"category": "pathway_filtering",
 			"name": "Minimum Significant Events",
 			"param_name": "number_of_significant_events",
@@ -221,7 +232,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "Fzr9jPmwhUL02tJF",
+			"id": "lSLsQU0TGFzzEya4",
 			"category": "pathway_filtering",
 			"name": "Maximum Pathways to Plot",
 			"param_name": "maximum_pathways_to_plot",
@@ -232,7 +243,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "6ZNvKhb4HY5UEeSB",
+			"id": "9pCNGGXenLItXvQF",
 			"category": "pathway_filtering",
 			"name": "Update Gene Symbols",
 			"param_name": "update_genes",
@@ -242,7 +253,7 @@
 			"default_value": "TRUE"
 		},
 		{
-			"id": "jMhdXrFNfyCDwiwO",
+			"id": "8brgHElxP0M9WzPF",
 			"category": "visualization",
 			"name": "Bubble Size Metric",
 			"param_name": "plot_bubble_size",
@@ -257,7 +268,7 @@
 			]
 		},
 		{
-			"id": "3ECWMt0fkXpXDUXw",
+			"id": "EKMlWQ2bqy9gazOT",
 			"category": "visualization",
 			"name": "Bubble Color Metric",
 			"param_name": "plot_bubble_color",
@@ -272,7 +283,7 @@
 			]
 		},
 		{
-			"id": "DwqsN65L9hykBRQM",
+			"id": "BJjzQHF0QbX1HfBn",
 			"category": "visualization",
 			"name": "Pathway Label Max Length",
 			"param_name": "pathway_axis_label_max_length",
@@ -283,18 +294,18 @@
 			"minimum": 10
 		},
 		{
-			"id": "8rfEGgkr9wGo7sgS",
+			"id": "6ccfjlks518F93jS",
 			"category": "visualization",
 			"name": "Pathway Label Font Size",
 			"param_name": "pathway_axis_label_font_size",
-			"help_text": "Font size for pathway labels on Y-axis",
+			"help_text": "Font size for pathway labels on Y-axis (tick labels)",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "5",
 			"minimum": 1
 		},
 		{
-			"id": "hAjrD3kUhNtMfMtr",
+			"id": "SK9OLWe3TCYONzlU",
 			"category": "custom_pathways",
 			"name": "Custom Pathway File",
 			"param_name": "custom_pathways",
@@ -303,7 +314,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "y06Dljq9YxTE2Vfo",
+			"id": "2zhGoLYaDIeo8Nzl",
 			"category": "custom_pathways",
 			"name": "Pathway Name Column",
 			"param_name": "custom_pathway_name_column",
@@ -313,7 +324,7 @@
 			"default_value": "gene_set_name"
 		},
 		{
-			"id": "3x4NevfXTthgYm51",
+			"id": "nPZ4v40B7u21qif1",
 			"category": "custom_pathways",
 			"name": "Gene Symbol Column",
 			"param_name": "custom_pathway_gene_column",
@@ -323,7 +334,7 @@
 			"default_value": "gene_symbol"
 		},
 		{
-			"id": "adl8woTDd2dSSZFq",
+			"id": "pqzjbcGIhHJy1XUG",
 			"category": "advanced_pathway",
 			"name": "Use Built-in Gene Universe",
 			"param_name": "use_built_in_gene_universe",
@@ -333,7 +344,7 @@
 			"default_value": "FALSE"
 		},
 		{
-			"id": "gNiBk2JakdVkXN0T",
+			"id": "8fly1glCx2tmYhRN",
 			"category": "advanced_pathway",
 			"name": "Minimum Pathway Hit Count",
 			"param_name": "minimum_pathway_hit_count",
@@ -344,7 +355,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "x0FX77z793S0mF7Y",
+			"id": "wjhR4SL7YmDeAaGX",
 			"category": "advanced_pathway",
 			"name": "Pathway Size Limit",
 			"param_name": "pathway_size_limit",
@@ -355,7 +366,7 @@
 			"minimum": 1
 		},
 		{
-			"id": "kgbSHNlt8mILxjII",
+			"id": "3lSvlyJDoEq0insU",
 			"category": "advanced_pathway",
 			"name": "P-value Limit",
 			"param_name": "p_value_limit",
@@ -367,7 +378,7 @@
 			"maximum": 1
 		},
 		{
-			"id": "0MFOiTqdX6UVVYgT",
+			"id": "bhj7YjMSjBTkyaZB",
 			"category": "advanced_pathway",
 			"name": "Use FDR for Significance",
 			"param_name": "use_fdr_for_significance",
@@ -377,7 +388,7 @@
 			"default_value": "FALSE"
 		},
 		{
-			"id": "tNL0qziSMLWwp77L",
+			"id": "msL1CiJlfhZ02F3Y",
 			"category": "advanced_plot",
 			"name": "Bubble Max Color Value",
 			"param_name": "plot_bubble_max_color",
@@ -388,7 +399,7 @@
 			"minimum": 0
 		},
 		{
-			"id": "bE3FbJyvCIwYcxPE",
+			"id": "R5QwyalKC7tVeLRt",
 			"category": "advanced_plot",
 			"name": "Pathways to Remove",
 			"param_name": "pathways_to_remove",
@@ -397,7 +408,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "TmMl4pFs3KSEtUHq",
+			"id": "NPMSE4bdkKrLa0NP",
 			"category": "advanced_plot",
 			"name": "Rename Groups",
 			"param_name": "rename_groups",
@@ -406,7 +417,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "GXkPgVvxMugmsX6n",
+			"id": "LoZ7yndjwjvAPgrL",
 			"category": "advanced_plot",
 			"name": "Vertical Line Placement",
 			"param_name": "vertical_line_placement",
@@ -415,7 +426,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "qwsPcMVF7p8FLUFU",
+			"id": "UAO8ykQ3kMcpUJyv",
 			"category": "advanced_plot",
 			"name": "Use Panel Plot",
 			"param_name": "use_panel_plot",
@@ -425,7 +436,7 @@
 			"default_value": "FALSE"
 		},
 		{
-			"id": "1K2GMaO9yktpiFiw",
+			"id": "S7a7xfRGNCb2lugX",
 			"category": "advanced_plot",
 			"name": "Dynamic Pathway Font Size",
 			"param_name": "use_dynamic_pathway_font_size",
@@ -435,7 +446,7 @@
 			"default_value": "TRUE"
 		},
 		{
-			"id": "TIkUrACE1000ZPeD",
+			"id": "xmR4JklzaBNaCIbb",
 			"category": "advanced_plot",
 			"name": "Custom Pathway Order",
 			"param_name": "custom_pathway_order",
@@ -444,7 +455,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "SQdXipCjZCkON5j1",
+			"id": "3vL0dVItWeldsqQy",
 			"category": "advanced_plot",
 			"name": "Column Spacing",
 			"param_name": "column_spacing",
@@ -455,16 +466,16 @@
 			"minimum": 0
 		},
 		{
-			"id": "F9FOLINS3SYmuGHf",
+			"id": "zNCH36C5i0J7ttYA",
 			"category": "axis_labeling",
 			"name": "X-Axis Title",
 			"param_name": "x_axis_title",
-			"help_text": "Optional custom title for the x-axis. Leave blank for no title",
+			"help_text": "Optional custom title for the x-axis (comparison axis). Leave blank for no title",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
-			"id": "diw269S0SUAjyDqb",
+			"id": "eN397ZjzTqwmIjsx",
 			"category": "axis_labeling",
 			"name": "Y-Axis Title",
 			"param_name": "y_axis_title",
@@ -473,7 +484,40 @@
 			"value_type": "string"
 		},
 		{
-			"id": "tsCOtrReJfQnjT0C",
+			"id": "53QI6FDtUaCIeTHs",
+			"category": "axis_labeling",
+			"name": "X-Axis Title Font Size",
+			"param_name": "x_axis_title_font_size",
+			"help_text": "Font size for x-axis title",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "14",
+			"minimum": 1
+		},
+		{
+			"id": "s7DeSsIzRsogcgja",
+			"category": "axis_labeling",
+			"name": "Y-Axis Title Font Size",
+			"param_name": "y_axis_title_font_size",
+			"help_text": "Font size for y-axis title",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "14",
+			"minimum": 1
+		},
+		{
+			"id": "Ro8pgfEdeDowkqz7",
+			"category": "axis_labeling",
+			"name": "X-Axis Tick Font Size",
+			"param_name": "x_axis_tick_font_size",
+			"help_text": "Font size for x-axis tick labels (comparison names)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "12",
+			"minimum": 1
+		},
+		{
+			"id": "aqqNhkHnALVAi4pF",
 			"category": "axis_labeling",
 			"name": "X-Axis Tick Labels",
 			"param_name": "x_axis_tick_labels",
@@ -482,7 +526,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "Yj5MqZeC01GubKO5",
+			"id": "CPOJsEsWH21s00mO",
 			"category": "axis_labeling",
 			"name": "Y-Axis Tick Labels",
 			"param_name": "y_axis_tick_labels",
@@ -491,7 +535,7 @@
 			"value_type": "string"
 		},
 		{
-			"id": "rofQeWIWmg4KOYuk",
+			"id": "7AxZuCoWxwwivWmx",
 			"category": "output",
 			"name": "Output Plot Path",
 			"param_name": "output_plot",
@@ -501,7 +545,7 @@
 			"default_value": "/results/l2p_multi_plot.png"
 		},
 		{
-			"id": "76JOjl0jKNM9JlRn",
+			"id": "uQK5KJe88T5WBzLn",
 			"category": "output",
 			"name": "Output Results Path",
 			"param_name": "output_results",
@@ -511,7 +555,7 @@
 			"default_value": "/results/l2p_multi_results.csv"
 		},
 		{
-			"id": "ZMwcHAPmb6teItOD",
+			"id": "dJW8Mhmr3aFfPrfr",
 			"category": "output",
 			"name": "Plot Width (inches)",
 			"param_name": "plot_width",
@@ -522,7 +566,7 @@
 			"minimum": 4
 		},
 		{
-			"id": "Ba0IQRtSHjP2Y9Qt",
+			"id": "A2xLjDlYYK4qtRBC",
 			"category": "output",
 			"name": "Plot Height (inches)",
 			"param_name": "plot_height",
