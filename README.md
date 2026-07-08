@@ -260,6 +260,15 @@ Divide plot into panels by pathway collection (not recommended for many collecti
 
 ## References
 
-- L2P package: https://github.com/ccbr/l2p
-- Original version: L2P Multi v93
-- Contact: NCICCBRNIDAP@mail.nih.gov
+- **L2P package**: https://github.com/ccbr/l2p
+- **Original version**: L2P Multi v93
+
+## Support
+
+For questions or issues:
+- **NIDAP Team**: NCICCBRNIDAP@mail.nih.gov
+- **CCBR**: CCR Collaborative Bioinformatics Resource
+
+---
+
+**OMIX Collection** | **Bioinformatics** | **Pathway Analysis** | **R**

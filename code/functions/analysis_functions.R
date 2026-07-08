@@ -1572,7 +1572,10 @@ l2p_multi <- function(
   pathall$group <- factor(pathall$group, levels = grouplevel)
   pathall %>% dplyr::filter(!pathway_name %in% pathways_to_remove) -> pathall
 
-  ranked_pathways_for_plot <- rank_pathways_for_plot(pathall)
+  pathall_output <- pathall
+  pathall_plot <- pathall_output
+
+  ranked_pathways_for_plot <- rank_pathways_for_plot(pathall_plot)
   if (
     is.finite(maximum_pathways_to_plot) &&
       length(ranked_pathways_for_plot) > maximum_pathways_to_plot
@@ -1581,7 +1584,7 @@ l2p_multi <- function(
       ranked_pathways_for_plot,
       maximum_pathways_to_plot
     )
-    pathall <- pathall %>%
+    pathall_plot <- pathall_plot %>%
       dplyr::filter(.data[["pathway_name"]] %in% pathways_to_keep)
     cat(sprintf(
       paste0(
@@ -1595,11 +1598,13 @@ l2p_multi <- function(
 
   if (length(rename_groups) > 0) {
     names(rename_groups) <- grouplevel
-    pathall$group <- rename_groups[pathall$group]
-    pathall$group <- factor(pathall$group, levels = rename_groups)
+    pathall_output$group <- rename_groups[pathall_output$group]
+    pathall_output$group <- factor(pathall_output$group, levels = rename_groups)
+    pathall_plot$group <- rename_groups[pathall_plot$group]
+    pathall_plot$group <- factor(pathall_plot$group, levels = rename_groups)
   }
 
-  pathall2 <- pathall
+  pathall2 <- pathall_plot
 
   if (use_dynamic_pathway_font_size) {
     npathways <- length(unique(pathall2$pathway_name))
@@ -1990,12 +1995,12 @@ l2p_multi <- function(
   }
 
   if (!update_genes) {
-    pathall <- pathall %>%
+    pathall_output <- pathall_output %>%
       dplyr::select(-orig_genes)
   }
 
   if (!is.null(export_results_file) && nzchar(export_results_file)) {
-    utils::write.csv(pathall, export_results_file, row.names = FALSE)
+    utils::write.csv(pathall_output, export_results_file, row.names = FALSE)
     final_analysis_provenance <- c(
       analysis_provenance,
       list(
@@ -2012,7 +2017,7 @@ l2p_multi <- function(
         } else {
           length(gene_universe)
         },
-        analysis_result_row_count = nrow(pathall)
+        analysis_result_row_count = nrow(pathall_output)
       )
     )
     provenance_file <- write_provenance_csv(
@@ -2022,5 +2027,5 @@ l2p_multi <- function(
     cat(sprintf("\nSaved provenance to %s\n", provenance_file))
   }
 
-  return(pathall)
+  return(pathall_output)
 }

@@ -1,20 +1,22 @@
 metadata_version: 1
-name: OMIX L2P Pathway Analysis (Multi)
+name: OMIX L2P Multi
 description: List to pathways (L2P) over-representation analysis for comparing multiple
   differential expression contrasts. Uses Fisher's exact test to identify enriched
   pathways and creates bubble plots comparing pathway enrichment across groups. Supports
   multiple pathway collections (GO, REACTOME, KEGG, MSigDB) and species via ortholog
-  mapping. Part of the OMIX analysis suite. Enhanced with MSigDB version logging for
-  improved reproducibility tracking.
+  mapping. Includes demo dataset (Mouse RNA-seq with 3 comparisons) for easy testing
+  - runs automatically if no input file is provided. Part of the OMIX analysis suite.
 tags:
 - OMIX
-- L2P
 - pathway-analysis
 - enrichment
+- gene-sets
 - bioinformatics
 - R
 - Bulk RNA-seq
 - Differential expression
+- MSigDB
+- L2P
 - Fisher exact test
 - over-representation
 - multi-comparison

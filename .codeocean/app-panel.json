@@ -3,70 +3,56 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "Compare pathway enrichment across multiple differential expression contrasts using Fisher's exact test. Configure the essential parameters in Basic Settings to get started."
+		"instructions": "START HERE:\n1. **Try with demo data**: Leave 'DEG Table File' blank to automatically use the attached Mouse RNA-seq demo dataset (3 comparisons: B-A, C-A, B-C)\n2. **Or upload your own**: Use the 'DEG Table File' parameter to upload your DEG results (RDS/CSV/TSV)\n3. Specify the 'Comparisons' to analyze (e.g., 'B-A,C-A,B-C')\n4. Configure Basic Settings and run\n\nAdvanced users can customize gene selection, pathway filtering, and visualization options."
 	},
+	"datasets": [
+		{
+			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
+			"name": "Demo DEG Table",
+			"help_text": "Mouse RNA-seq demo data with 3 comparisons (B-A, C-A, B-C). Used automatically if no file is uploaded."
+		}
+	],
 	"categories": [
 		{
 			"id": "basic",
-			"name": "Basic Settings",
+			"name": "⭐ Basic Settings",
 			"help_text": "Essential parameters to get started"
 		},
 		{
 			"id": "columns",
-			"name": "Column Overrides (Advanced)",
-			"help_text": "Advanced: Override auto-detected columns if needed"
+			"name": "Column Overrides",
+			"help_text": "Override auto-detected column names if needed"
 		},
 		{
 			"id": "gene_selection",
-			"name": "Gene Selection Method",
-			"help_text": "How to select significant genes for enrichment"
+			"name": "Gene Selection",
+			"help_text": "Fine-tune gene selection criteria"
 		},
 		{
-			"id": "pathway_filtering",
-			"name": "Pathway Filtering",
-			"help_text": "Filters to identify significant pathways"
-		},
-		{
-			"id": "visualization",
-			"name": "Visualization Options",
-			"help_text": "Customize bubble plot appearance"
+			"id": "pathways",
+			"name": "Pathway Settings",
+			"help_text": "Customize pathway filtering and selection"
 		},
 		{
 			"id": "custom_pathways",
 			"name": "Custom Pathways (Optional)",
-			"help_text": "Use your own pathway database"
+			"help_text": "Use your own pathway database instead of or in addition to built-in collections"
 		},
 		{
-			"id": "advanced_pathway",
-			"name": "Advanced Pathway Filtering",
-			"help_text": "Fine-grained pathway filtering controls"
-		},
-		{
-			"id": "advanced_plot",
-			"name": "Advanced Plot Customization",
-			"help_text": "Expert-level plot customization"
-		},
-		{
-			"id": "axis_labeling",
-			"name": "Axis Customization (Optional)",
-			"help_text": "Customize axis titles, labels, and font sizes"
-		},
-		{
-			"id": "output",
-			"name": "Output Settings",
-			"help_text": "Output file paths and dimensions"
+			"id": "visualization",
+			"name": "Visualization",
+			"help_text": "Customize plot appearance and output"
 		}
 	],
 	"parameters": [
 		{
-			"id": "r7TfpDG9UQIFPER4",
+			"id": "deg_file_upload",
 			"category": "basic",
-			"name": "Input DEG Table",
-			"param_name": "input_file",
-			"help_text": "Path to differential expression results table (RDS, CSV, or TSV format) containing gene names and statistics for multiple comparisons",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "/data/deg_table/var_DEGAnalysis.rds"
+			"name": "DEG Table File",
+			"param_name": "deg_file",
+			"help_text": "Upload your differential expression file (RDS/CSV/TSV). Leave blank to automatically use the attached demo dataset.",
+			"type": "file",
+			"value_type": "string"
 		},
 		{
 			"id": "qNP3EAGr28c9VQm2",
@@ -112,7 +98,7 @@
 			"category": "basic",
 			"name": "Pathway Collections",
 			"param_name": "collections",
-			"help_text": "Comma-separated pathway collections: GO, REACTOME, KEGG, H (Hallmark), C1-C8 (MSigDB), WikiPathways",
+			"help_text": "Comma-separated pathway collections: GO, REACTOME, KEGG, H (Hallmark), C1-C8 (MSigDB), WikiPathways. Leave blank if using only custom pathways",
 			"type": "text",
 			"value_type": "string",
 			"default_value": "H"
@@ -131,7 +117,7 @@
 			"category": "columns",
 			"name": "Significance Columns",
 			"param_name": "significance_columns",
-			"help_text": "Override auto-detected p-value columns. Comma-separated column names (required if not using rank-based selection). Leave blank to use Comparisons parameter",
+			"help_text": "Override auto-detected p-value columns. Comma-separated column names. Leave blank to use Comparisons parameter",
 			"type": "text",
 			"value_type": "string"
 		},
@@ -140,16 +126,16 @@
 			"category": "columns",
 			"name": "Fold Change Columns",
 			"param_name": "fold_change_columns",
-			"help_text": "Override auto-detected fold change columns. Comma-separated column names (required if not using rank-based selection). Leave blank to use Comparisons parameter",
+			"help_text": "Override auto-detected fold change columns. Comma-separated column names. Leave blank to use Comparisons parameter",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
 			"id": "fgY5hinPeTayVrU0",
 			"category": "gene_selection",
-			"name": "Select Genes By Rank",
+			"name": "Select By Rank",
 			"param_name": "select_by_rank",
-			"help_text": "If TRUE, select genes by t-statistic rank. If FALSE, use p-value and fold change thresholds",
+			"help_text": "Select genes by rank (recommended) or by significance/fold change thresholds",
 			"type": "text",
 			"value_type": "boolean",
 			"default_value": "TRUE"
@@ -159,7 +145,7 @@
 			"category": "gene_selection",
 			"name": "Select Top Percentage",
 			"param_name": "select_top_percentage",
-			"help_text": "If TRUE, select top 10% of genes by rank. If FALSE, use 'Number of Top Genes' parameter",
+			"help_text": "Select top percentage of genes (vs fixed number)",
 			"type": "text",
 			"value_type": "boolean",
 			"default_value": "TRUE"
@@ -169,7 +155,7 @@
 			"category": "gene_selection",
 			"name": "Number of Top Genes",
 			"param_name": "select_top_genes",
-			"help_text": "Number of top-ranked genes to select (used when 'Select Top Percentage' is FALSE)",
+			"help_text": "Number of top genes to select (if not using percentage)",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "500",
@@ -178,9 +164,9 @@
 		{
 			"id": "j7WEJQsW5EOJjoGI",
 			"category": "gene_selection",
-			"name": "P-value Threshold",
+			"name": "Significance Threshold",
 			"param_name": "significance_threshold",
-			"help_text": "P-value or adjusted p-value threshold for gene selection (used when 'Select By Rank' is FALSE)",
+			"help_text": "P-value threshold for gene selection (if not using rank)",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "0.05",
@@ -192,7 +178,7 @@
 			"category": "gene_selection",
 			"name": "Fold Change Threshold",
 			"param_name": "fold_change_threshold",
-			"help_text": "Fold change threshold for gene selection (used when 'Select By Rank' is FALSE). Applied as fold change even if column is log-transformed",
+			"help_text": "Fold change threshold for gene selection (if not using rank)",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "1.2",
@@ -203,7 +189,7 @@
 			"category": "gene_selection",
 			"name": "Minimum DEG Genes",
 			"param_name": "minimum_number_of_deg_genes",
-			"help_text": "Minimum number of DEG genes required per comparison to proceed with analysis",
+			"help_text": "Minimum number of DEG genes required per comparison",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "100",
@@ -211,7 +197,7 @@
 		},
 		{
 			"id": "Y61xcxrjmGsq2QnI",
-			"category": "pathway_filtering",
+			"category": "pathways",
 			"name": "Top Pathways to Compare",
 			"param_name": "top_pathways",
 			"help_text": "Number of top pathways to include in comparison across groups",
@@ -222,10 +208,10 @@
 		},
 		{
 			"id": "71s4fi7ydy3Kg6e1",
-			"category": "pathway_filtering",
+			"category": "pathways",
 			"name": "Minimum Significant Events",
 			"param_name": "number_of_significant_events",
-			"help_text": "Minimum number of comparisons where pathway must be significant to be included",
+			"help_text": "Minimum number of comparisons where pathway must be significant",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "1",
@@ -233,76 +219,78 @@
 		},
 		{
 			"id": "2webAq1rhK7bv70o",
-			"category": "pathway_filtering",
+			"category": "pathways",
 			"name": "Maximum Pathways to Plot",
 			"param_name": "maximum_pathways_to_plot",
-			"help_text": "Maximum number of pathways to display in the bubble plot (controls plot density)",
+			"help_text": "Maximum number of pathways to display in the bubble plot",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "15",
 			"minimum": 1
 		},
 		{
+			"id": "gYXJBzZhFmwgeHSS",
+			"category": "pathways",
+			"name": "Minimum Pathway Hits",
+			"param_name": "minimum_pathway_hit_count",
+			"help_text": "Minimum genes required per pathway to be considered",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "5",
+			"minimum": 1
+		},
+		{
+			"id": "7QrQzJTTmSpvenM4",
+			"category": "pathways",
+			"name": "Pathway Size Limit",
+			"param_name": "pathway_size_limit",
+			"help_text": "Maximum pathway size (pathways with more genes are excluded)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "500",
+			"minimum": 1
+		},
+		{
+			"id": "iJ8Y3zvGEZwJcTGn",
+			"category": "pathways",
+			"name": "P-value Threshold",
+			"param_name": "p_value_limit",
+			"help_text": "P-value cutoff for including pathways in results (0 = include all)",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "0.05",
+			"minimum": 0,
+			"maximum": 1
+		},
+		{
+			"id": "bbU8CJAFOkGL98xg",
+			"category": "pathways",
+			"name": "Use Built-in Gene Universe",
+			"param_name": "use_built_in_gene_universe",
+			"help_text": "Use built-in gene universe instead of detected genes",
+			"type": "text",
+			"value_type": "boolean",
+			"default_value": "FALSE"
+		},
+		{
+			"id": "4BkHmpc9NVkXeY5x",
+			"category": "pathways",
+			"name": "Use FDR P-values",
+			"param_name": "use_fdr_for_significance",
+			"help_text": "Use FDR-adjusted p-values for pathway significance",
+			"type": "text",
+			"value_type": "boolean",
+			"default_value": "FALSE"
+		},
+		{
 			"id": "TGpL4APLgZOdIanR",
-			"category": "pathway_filtering",
+			"category": "pathways",
 			"name": "Update Gene Symbols",
 			"param_name": "update_genes",
-			"help_text": "Update gene symbols to current nomenclature. Original symbols are preserved in output",
+			"help_text": "Update gene symbols to current nomenclature",
 			"type": "text",
 			"value_type": "boolean",
 			"default_value": "TRUE"
-		},
-		{
-			"id": "dtnU7fMfV8aCJAZO",
-			"category": "visualization",
-			"name": "Bubble Size Metric",
-			"param_name": "plot_bubble_size",
-			"help_text": "Metric to determine bubble size: p-value, FDR, or number of gene hits",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "pval",
-			"extra_data": [
-				"pval",
-				"fdr",
-				"number_hits"
-			]
-		},
-		{
-			"id": "ZoGjT5QXBvK4WQD1",
-			"category": "visualization",
-			"name": "Bubble Color Metric",
-			"param_name": "plot_bubble_color",
-			"help_text": "Metric to determine bubble color gradient",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "enrichment_score",
-			"extra_data": [
-				"enrichment_score",
-				"net_enrichment_score",
-				"percent_gene_hits_per_pathway"
-			]
-		},
-		{
-			"id": "7b11vwPwZirTBn0F",
-			"category": "visualization",
-			"name": "Pathway Label Max Length",
-			"param_name": "pathway_axis_label_max_length",
-			"help_text": "Maximum character length for pathway names on Y-axis",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "45",
-			"minimum": 10
-		},
-		{
-			"id": "po3QfLbrmvSipSUk",
-			"category": "visualization",
-			"name": "Pathway Label Font Size",
-			"param_name": "pathway_axis_label_font_size",
-			"help_text": "Font size for pathway labels on Y-axis (tick labels)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 1
 		},
 		{
 			"id": "XZcuON2LQDwX8LFI",
@@ -334,62 +322,38 @@
 			"default_value": "gene_symbol"
 		},
 		{
-			"id": "bbU8CJAFOkGL98xg",
-			"category": "advanced_pathway",
-			"name": "Use Built-in Gene Universe",
-			"param_name": "use_built_in_gene_universe",
-			"help_text": "Use built-in gene universe instead of detected genes from data",
-			"type": "text",
-			"value_type": "boolean",
-			"default_value": "FALSE"
+			"id": "dtnU7fMfV8aCJAZO",
+			"category": "visualization",
+			"name": "Bubble Size Metric",
+			"param_name": "plot_bubble_size",
+			"help_text": "Metric to determine bubble size",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "pval",
+			"extra_data": [
+				"pval",
+				"fdr",
+				"number_hits"
+			]
 		},
 		{
-			"id": "gYXJBzZhFmwgeHSS",
-			"category": "advanced_pathway",
-			"name": "Minimum Pathway Hit Count",
-			"param_name": "minimum_pathway_hit_count",
-			"help_text": "Minimum number of genes required per pathway to be considered",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "5",
-			"minimum": 1
-		},
-		{
-			"id": "7QrQzJTTmSpvenM4",
-			"category": "advanced_pathway",
-			"name": "Pathway Size Limit",
-			"param_name": "pathway_size_limit",
-			"help_text": "Maximum pathway size (pathways with more genes are excluded)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "500",
-			"minimum": 1
-		},
-		{
-			"id": "iJ8Y3zvGEZwJcTGn",
-			"category": "advanced_pathway",
-			"name": "P-value Limit",
-			"param_name": "p_value_limit",
-			"help_text": "P-value cutoff for including pathways in results",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "0.05",
-			"minimum": 0,
-			"maximum": 1
-		},
-		{
-			"id": "4BkHmpc9NVkXeY5x",
-			"category": "advanced_pathway",
-			"name": "Use FDR for Significance",
-			"param_name": "use_fdr_for_significance",
-			"help_text": "Use FDR-adjusted p-values for pathway significance instead of raw p-values",
-			"type": "text",
-			"value_type": "boolean",
-			"default_value": "FALSE"
+			"id": "ZoGjT5QXBvK4WQD1",
+			"category": "visualization",
+			"name": "Bubble Color Metric",
+			"param_name": "plot_bubble_color",
+			"help_text": "Metric to determine bubble color gradient",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "enrichment_score",
+			"extra_data": [
+				"enrichment_score",
+				"net_enrichment_score",
+				"percent_gene_hits_per_pathway"
+			]
 		},
 		{
 			"id": "GsH1moXfxkrFcLcz",
-			"category": "advanced_plot",
+			"category": "visualization",
 			"name": "Bubble Max Color Value",
 			"param_name": "plot_bubble_max_color",
 			"help_text": "Maximum value for color scale gradient",
@@ -399,45 +363,30 @@
 			"minimum": 0
 		},
 		{
-			"id": "7Iq5sfNOwnuwOckB",
-			"category": "advanced_plot",
-			"name": "Pathways to Remove",
-			"param_name": "pathways_to_remove",
-			"help_text": "Comma-separated list of pathway names to exclude from plot",
+			"id": "7b11vwPwZirTBn0F",
+			"category": "visualization",
+			"name": "Pathway Label Max Length",
+			"param_name": "pathway_axis_label_max_length",
+			"help_text": "Maximum character length for pathway names",
 			"type": "text",
-			"value_type": "string"
+			"value_type": "number",
+			"default_value": "45",
+			"minimum": 10
 		},
 		{
-			"id": "1nRNlRDM9HvPLaln",
-			"category": "advanced_plot",
-			"name": "Rename Groups",
-			"param_name": "rename_groups",
-			"help_text": "Comma-separated new names for comparison groups in plot (must match number of comparisons)",
+			"id": "po3QfLbrmvSipSUk",
+			"category": "visualization",
+			"name": "Pathway Label Font Size",
+			"param_name": "pathway_axis_label_font_size",
+			"help_text": "Font size for pathway labels",
 			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "wQQDlcLWqnlHGyW6",
-			"category": "advanced_plot",
-			"name": "Vertical Line Placement",
-			"param_name": "vertical_line_placement",
-			"help_text": "Comma-separated positions (numbers) for vertical separator lines between comparison groups",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "FbYTJuzxEcr8IMoS",
-			"category": "advanced_plot",
-			"name": "Use Panel Plot",
-			"param_name": "use_panel_plot",
-			"help_text": "Use panel layout for plot (splits comparisons into separate panels)",
-			"type": "text",
-			"value_type": "boolean",
-			"default_value": "FALSE"
+			"value_type": "number",
+			"default_value": "14",
+			"minimum": 1
 		},
 		{
 			"id": "ZidGBmAHKkt7Gum4",
-			"category": "advanced_plot",
+			"category": "visualization",
 			"name": "Dynamic Pathway Font Size",
 			"param_name": "use_dynamic_pathway_font_size",
 			"help_text": "Automatically adjust pathway label font size based on number of pathways",
@@ -446,46 +395,26 @@
 			"default_value": "TRUE"
 		},
 		{
-			"id": "5w1ZsGYAEW3kz1N6",
-			"category": "advanced_plot",
-			"name": "Custom Pathway Order",
-			"param_name": "custom_pathway_order",
-			"help_text": "Comma-separated list of pathway names to define custom Y-axis order",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "nADyZeuRxCUTf1YG",
-			"category": "advanced_plot",
-			"name": "Column Spacing",
-			"param_name": "column_spacing",
-			"help_text": "Spacing between comparison columns in the plot",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "0.5",
-			"minimum": 0
-		},
-		{
 			"id": "i1jyF1pMHsz45FwM",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "X-Axis Title",
 			"param_name": "x_axis_title",
-			"help_text": "Optional custom title for the x-axis (comparison axis). Leave blank for no title",
+			"help_text": "Optional custom title for the x-axis. Leave blank for no title",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
 			"id": "TyBMKmvaMQJfHaNv",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "Y-Axis Title",
 			"param_name": "y_axis_title",
-			"help_text": "Optional custom title for the y-axis (pathway axis). Leave blank for no title",
+			"help_text": "Optional custom title for the y-axis. Leave blank for no title",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
 			"id": "8aqNUHYIsUG7SXzj",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "X-Axis Title Font Size",
 			"param_name": "x_axis_title_font_size",
 			"help_text": "Font size for x-axis title",
@@ -496,7 +425,7 @@
 		},
 		{
 			"id": "KxB7Yee4gc131KPk",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "Y-Axis Title Font Size",
 			"param_name": "y_axis_title_font_size",
 			"help_text": "Font size for y-axis title",
@@ -507,10 +436,10 @@
 		},
 		{
 			"id": "7sH27UseIr4NIVLc",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "X-Axis Tick Font Size",
 			"param_name": "x_axis_tick_font_size",
-			"help_text": "Font size for x-axis tick labels (comparison names)",
+			"help_text": "Font size for x-axis tick labels",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "14",
@@ -518,25 +447,104 @@
 		},
 		{
 			"id": "OQR58Hg9IzgY4A2w",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "X-Axis Tick Labels",
 			"param_name": "x_axis_tick_labels",
-			"help_text": "Comma-separated custom labels for x-axis ticks (comparison columns). Must match number of comparisons. Leave blank to use original comparison names",
+			"help_text": "Comma-separated custom labels for x-axis ticks. Must match number of comparisons. Leave blank to use defaults",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
 			"id": "eJsoUs2t5EI1RIq9",
-			"category": "axis_labeling",
+			"category": "visualization",
 			"name": "Y-Axis Tick Labels",
 			"param_name": "y_axis_tick_labels",
-			"help_text": "Comma-separated custom labels for y-axis ticks (pathways). Must match number of displayed pathways. Leave blank to use pathway names",
+			"help_text": "Comma-separated custom labels for y-axis ticks. Must match number of pathways. Leave blank to use defaults",
 			"type": "text",
 			"value_type": "string"
 		},
 		{
+			"id": "7Iq5sfNOwnuwOckB",
+			"category": "visualization",
+			"name": "Pathways to Remove",
+			"param_name": "pathways_to_remove",
+			"help_text": "Comma-separated list of pathway names to exclude from plot",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "1nRNlRDM9HvPLaln",
+			"category": "visualization",
+			"name": "Rename Groups",
+			"param_name": "rename_groups",
+			"help_text": "Comma-separated new names for comparison groups (must match number of comparisons)",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "wQQDlcLWqnlHGyW6",
+			"category": "visualization",
+			"name": "Vertical Line Placement",
+			"param_name": "vertical_line_placement",
+			"help_text": "Comma-separated positions for vertical separator lines between groups",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "5w1ZsGYAEW3kz1N6",
+			"category": "visualization",
+			"name": "Custom Pathway Order",
+			"param_name": "custom_pathway_order",
+			"help_text": "Comma-separated pathway names to define custom Y-axis order",
+			"type": "text",
+			"value_type": "string"
+		},
+		{
+			"id": "FbYTJuzxEcr8IMoS",
+			"category": "visualization",
+			"name": "Use Panel Plot",
+			"param_name": "use_panel_plot",
+			"help_text": "Use panel layout (splits comparisons into separate panels)",
+			"type": "text",
+			"value_type": "boolean",
+			"default_value": "FALSE"
+		},
+		{
+			"id": "nADyZeuRxCUTf1YG",
+			"category": "visualization",
+			"name": "Column Spacing",
+			"param_name": "column_spacing",
+			"help_text": "Spacing between comparison columns in the plot",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "0.5",
+			"minimum": 0
+		},
+		{
+			"id": "4BGgaRQXMtiXdojT",
+			"category": "visualization",
+			"name": "Plot Width",
+			"param_name": "plot_width",
+			"help_text": "Plot width in inches",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "14",
+			"minimum": 4
+		},
+		{
+			"id": "0muXPO2uRZB7MkYy",
+			"category": "visualization",
+			"name": "Plot Height",
+			"param_name": "plot_height",
+			"help_text": "Plot height in inches",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "16",
+			"minimum": 4
+		},
+		{
 			"id": "7xJPnGsytZvupWW0",
-			"category": "output",
+			"category": "visualization",
 			"name": "Output Plot Path",
 			"param_name": "output_plot",
 			"help_text": "File path for output bubble plot",
@@ -546,35 +554,13 @@
 		},
 		{
 			"id": "TbMCa9G7buigMeAk",
-			"category": "output",
+			"category": "visualization",
 			"name": "Output Results Path",
 			"param_name": "output_results",
 			"help_text": "File path for output results table",
 			"type": "text",
 			"value_type": "string",
 			"default_value": "/results/l2p_multi_results.csv"
-		},
-		{
-			"id": "4BGgaRQXMtiXdojT",
-			"category": "output",
-			"name": "Plot Width (inches)",
-			"param_name": "plot_width",
-			"help_text": "Width of output plot in inches",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 4
-		},
-		{
-			"id": "0muXPO2uRZB7MkYy",
-			"category": "output",
-			"name": "Plot Height (inches)",
-			"param_name": "plot_height",
-			"help_text": "Height of output plot in inches",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "16",
-			"minimum": 4
 		}
 	]
 }

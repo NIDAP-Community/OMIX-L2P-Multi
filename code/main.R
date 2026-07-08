@@ -65,11 +65,12 @@ log_time("Loaded optparse library")
 
 # Define command-line options (matching L2P Multi parameters)
 option_list <- list(
-  # Required parameters
+  # Data input (upload takes priority over data asset)
   make_option(
-    "--input_file",
+    "--deg_file",
     type = "character",
-    help = "Input DEG table file path (RDS, CSV, TSV)"
+    default = NULL,
+    help = "Upload DEG file (CSV, TSV, or RDS)"
   ),
   make_option(
     "--gene_names_column",
@@ -373,32 +374,109 @@ option_list <- list(
 )
 
 opt_parser <- OptionParser(option_list = option_list)
-opt <- parse_args(opt_parser)
+
+# Filter out empty string arguments before optparse sees them
+# Code Ocean passes --param "" for blank file uploads, which optparse rejects
+args <- commandArgs(trailingOnly = TRUE)
+filtered_args <- character()
+i <- 1
+while (i <= length(args)) {
+  # Skip standalone empty strings
+  if (args[i] == "") {
+    i <- i + 1
+  } else if (i < length(args) && startsWith(args[i], "--") && args[i+1] == "") {
+    # Skip flag + empty value pairs
+    i <- i + 2
+  } else {
+    filtered_args <- c(filtered_args, args[i])
+    i <- i + 1
+  }
+}
+
+opt <- parse_args(opt_parser, args = filtered_args)
 log_time("Parsed command-line arguments")
 
 # Validate required parameters
-if (is.null(opt$input_file)) {
-  stop("ERROR: 'input_file' parameter is required")
-}
 if (is.null(opt$gene_names_column)) {
   stop("ERROR: 'gene_names_column' parameter is required")
 }
-if (!file.exists(opt$input_file)) {
-  stop(sprintf("ERROR: Input file not found: %s", opt$input_file))
+
+# Load input data: uploaded file > data asset (priority-based loading)
+log_time("Starting data loading")
+
+deg_table <- NULL
+input_file_path <- NULL
+
+# Priority 1: Check for uploaded file
+if (!is.null(opt$deg_file) && opt$deg_file != "" && file.exists(opt$deg_file)) {
+  input_file_path <- opt$deg_file
+  cat(sprintf("Loading DEG table from uploaded file: %s\n", input_file_path))
+  
+  if (grepl("\\.rds$", input_file_path, ignore.case = TRUE)) {
+    deg_table <- readRDS(input_file_path)
+    # If RDS contains a list, extract the data frame
+    if (is.list(deg_table) && !is.data.frame(deg_table)) {
+      df_elements <- sapply(deg_table, is.data.frame)
+      if (any(df_elements)) {
+        deg_table <- deg_table[[which(df_elements)[1]]]
+        cat("Extracted data frame from list\n")
+      } else {
+        stop("ERROR: RDS file does not contain a data frame")
+      }
+    }
+  } else if (grepl("\\.csv$", input_file_path, ignore.case = TRUE)) {
+    deg_table <- read.csv(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
+  } else if (grepl("\\.tsv$|\\.txt$", input_file_path, ignore.case = TRUE)) {
+    deg_table <- read.delim(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
+  } else {
+    stop("ERROR: Uploaded file must be .rds, .csv, or .tsv")
+  }
+  log_time("Loaded uploaded file")
 }
 
-# Load input data
-log_time("Starting data loading")
-if (grepl("\\.rds$", opt$input_file, ignore.case = TRUE)) {
-  deg_table <- readRDS(opt$input_file)
-} else if (grepl("\\.csv$", opt$input_file, ignore.case = TRUE)) {
-  deg_table <- read.csv(opt$input_file, stringsAsFactors = FALSE)
-} else if (grepl("\\.tsv$|\\.txt$", opt$input_file, ignore.case = TRUE)) {
-  deg_table <- read.delim(opt$input_file, stringsAsFactors = FALSE)
-} else {
-  stop("ERROR: Input file must be .rds, .csv, or .tsv")
+# Priority 2: Check for data asset at /data/deg_table/
+if (is.null(deg_table)) {
+  cat("No uploaded file found. Looking for DEG table in /data/deg_table/...\n")
+  rds_files <- list.files("/data/deg_table", pattern = "\\.rds$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+  csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+  
+  if (length(rds_files) > 0) {
+    input_file_path <- rds_files[1]
+    cat(sprintf("Loading DEG table from RDS file: %s\n", input_file_path))
+    deg_table <- readRDS(input_file_path)
+    
+    # If RDS contains a list, extract the data frame
+    if (is.list(deg_table) && !is.data.frame(deg_table)) {
+      df_elements <- sapply(deg_table, is.data.frame)
+      if (any(df_elements)) {
+        deg_table <- deg_table[[which(df_elements)[1]]]
+        cat("Extracted data frame from list\n")
+      } else {
+        stop("ERROR: RDS file does not contain a data frame")
+      }
+    }
+    log_time("Loaded RDS file from data asset")
+    
+  } else if (length(csv_files) > 0) {
+    input_file_path <- csv_files[1]
+    cat(sprintf("Loading DEG table from CSV/TSV file: %s\n", input_file_path))
+    
+    file_ext <- tolower(tools::file_ext(input_file_path))
+    if (file_ext == "csv") {
+      deg_table <- read.csv(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
+    } else {
+      deg_table <- read.delim(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
+    }
+    log_time("Loaded CSV/TSV file from data asset")
+  } else {
+    stop("ERROR: No DEG table provided. Please upload a file or attach a DEG table data asset.")
+  }
 }
-log_time("Loaded data file")
+
+# Verify we have a data frame
+if (!is.data.frame(deg_table)) {
+  stop("ERROR: Loaded data is not a data frame")
+}
 
 # Validate gene names column exists
 available_cols <- colnames(deg_table)
