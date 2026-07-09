@@ -3,7 +3,7 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "START HERE:\n1. **Try with demo data**: Leave 'DEG Table File' blank to automatically use the attached Mouse RNA-seq demo dataset (3 comparisons: B-A, C-A, B-C)\n2. **Or upload your own**: Use the 'DEG Table File' parameter to upload your DEG results (RDS/CSV/TSV)\n3. Specify the 'Comparisons' to analyze (e.g., 'B-A,C-A,B-C')\n4. Configure Basic Settings and run\n\nAdvanced users can customize gene selection, pathway filtering, and visualization options."
+		"instructions": "START HERE:\n1. **Single flat file**: Leave 'DEG Table File' blank — auto-detected from attached dataset\n2. **MOSuite moo-properties asset (filtered)**: Set 'DEG Table File' to Filtered DEG — loads analyses/diff_filt.csv\n3. **MOSuite moo-properties asset (all comparisons)**: Set 'DEG Table File' to All DEG — loads and merges diff_{comparison}.csv files\n4. **Explicit path**: Set 'DEG Table File' to a full path e.g. /data/moo-properties/analyses/diff_filt.csv\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
 	},
 	"datasets": [
 		{
@@ -50,8 +50,8 @@
 			"category": "basic",
 			"name": "DEG Table File",
 			"param_name": "deg_file",
-			"help_text": "Upload your differential expression file (RDS/CSV/TSV). Leave blank to automatically use the attached demo dataset.",
-			"type": "file",
+			"help_text": "Controls input mode. Leave blank to auto-detect a single flat file. Set to 'Filtered DEG' to load analyses/diff_filt.csv from a moo-properties asset. Set to 'All DEG' to load and merge per-comparison diff_{comparison}.csv files. Or enter a full file path (e.g. /data/moo-properties/analyses/diff_filt.csv).",
+			"type": "text",
 			"value_type": "string"
 		},
 		{
@@ -59,17 +59,17 @@
 			"category": "basic",
 			"name": "Gene Names Column",
 			"param_name": "gene_names_column",
-			"help_text": "Name of the column containing gene symbols",
+			"help_text": "Name of the column containing gene symbols (e.g. GeneName for MOSuite output, Gene for other formats)",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "Gene"
+			"default_value": "GeneName"
 		},
 		{
 			"id": "eUXk7u4FwvJfsI63",
 			"category": "basic",
 			"name": "Comparisons",
 			"param_name": "comparisons",
-			"help_text": "Comma-separated comparison IDs (e.g., 'TreatmentB-Control,TreatmentC-Control'). Column names are derived as \u003ccomparison\u003e_tstat, \u003ccomparison\u003e_pval, \u003ccomparison\u003e_FC",
+			"help_text": "Comma-separated comparison IDs (e.g. 'B-A,C-A,B-C'). Used to find per-comparison files in All DEG mode (diff_B-A.csv etc.) and to derive column names.",
 			"type": "text",
 			"value_type": "string",
 			"default_value": "B-A, C-A, B-C"
@@ -108,27 +108,30 @@
 			"category": "columns",
 			"name": "T-Statistic Columns",
 			"param_name": "t_statistic_columns",
-			"help_text": "Override auto-detected t-statistic columns. Comma-separated column names (used for ranking genes). Leave blank to use Comparisons parameter",
+			"help_text": "T-statistic column name. For MOSuite per-comparison files (All DEG mode): single name e.g. tstat — the comparison prefix is added automatically. For combined tables: comma-separated e.g. B-A_tstat, C-A_tstat.",
 			"type": "text",
-			"value_type": "string"
+			"value_type": "string",
+			"default_value": "tstat"
 		},
 		{
 			"id": "uPPkk2mh7dEjx1hA",
 			"category": "columns",
 			"name": "Significance Columns",
 			"param_name": "significance_columns",
-			"help_text": "Override auto-detected p-value columns. Comma-separated column names. Leave blank to use Comparisons parameter",
+			"help_text": "Significance (p-value) column name. For MOSuite per-comparison files (All DEG mode): single name e.g. adjpval. For combined tables: comma-separated e.g. B-A_adjpval, C-A_adjpval.",
 			"type": "text",
-			"value_type": "string"
+			"value_type": "string",
+			"default_value": "adjpval"
 		},
 		{
 			"id": "oL23Pa1gVX78Dln6",
 			"category": "columns",
 			"name": "Fold Change Columns",
 			"param_name": "fold_change_columns",
-			"help_text": "Override auto-detected fold change columns. Comma-separated column names. Leave blank to use Comparisons parameter",
+			"help_text": "Fold change column name. For MOSuite per-comparison files (All DEG mode): single name e.g. FC. For combined tables: comma-separated e.g. B-A_FC, C-A_FC.",
 			"type": "text",
-			"value_type": "string"
+			"value_type": "string",
+			"default_value": "FC"
 		},
 		{
 			"id": "fgY5hinPeTayVrU0",
@@ -297,7 +300,7 @@
 			"category": "custom_pathways",
 			"name": "Custom Pathway File",
 			"param_name": "custom_pathways",
-			"help_text": "Select custom pathway file from attached data assets (TSV/CSV format). Leave blank to use only standard collections. Can be used WITH or WITHOUT standard collections",
+			"help_text": "Select custom pathway file from attached data assets (TSV/CSV format). Leave blank to use only standard collections.",
 			"type": "file",
 			"value_type": "string"
 		},

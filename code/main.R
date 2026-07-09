@@ -432,44 +432,292 @@ if (!is.null(opt$deg_file) && opt$deg_file != "" && file.exists(opt$deg_file)) {
     stop("ERROR: Uploaded file must be .rds, .csv, or .tsv")
   }
   log_time("Loaded uploaded file")
+
+  # Warn if the gene names column contains duplicate values
+  if (is.data.frame(deg_table) &&
+      !is.null(opt$gene_names_column) &&
+      opt$gene_names_column %in% colnames(deg_table)) {
+    dups <- deg_table[[opt$gene_names_column]][duplicated(deg_table[[opt$gene_names_column]])]
+    if (length(dups) > 0) {
+      uniq_dups  <- unique(dups)
+      sample_str <- paste(head(uniq_dups, 5), collapse = ", ")
+      if (length(uniq_dups) > 5) sample_str <- paste0(sample_str, " ...")
+      cat(sprintf(
+        "\nWARNING: %d duplicate value(s) in '%s' column of '%s': %s\n\n",
+        length(dups), opt$gene_names_column, basename(input_file_path), sample_str
+      ))
+    }
+  }
 }
 
-# Priority 2: Check for data asset at /data/deg_table/
-if (is.null(deg_table)) {
-  cat("No uploaded file found. Looking for DEG table in /data/deg_table/...\n")
-  rds_files <- list.files("/data/deg_table", pattern = "\\.rds$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  
-  if (length(rds_files) > 0) {
-    input_file_path <- rds_files[1]
-    cat(sprintf("Loading DEG table from RDS file: %s\n", input_file_path))
-    deg_table <- readRDS(input_file_path)
-    
-    # If RDS contains a list, extract the data frame
-    if (is.list(deg_table) && !is.data.frame(deg_table)) {
-      df_elements <- sapply(deg_table, is.data.frame)
-      if (any(df_elements)) {
-        deg_table <- deg_table[[which(df_elements)[1]]]
-        cat("Extracted data frame from list\n")
-      } else {
-        stop("ERROR: RDS file does not contain a data frame")
-      }
-    }
-    log_time("Loaded RDS file from data asset")
-    
-  } else if (length(csv_files) > 0) {
-    input_file_path <- csv_files[1]
-    cat(sprintf("Loading DEG table from CSV/TSV file: %s\n", input_file_path))
-    
-    file_ext <- tolower(tools::file_ext(input_file_path))
-    if (file_ext == "csv") {
-      deg_table <- read.csv(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
-    } else {
-      deg_table <- read.delim(input_file_path, stringsAsFactors = FALSE, check.names = FALSE)
-    }
-    log_time("Loaded CSV/TSV file from data asset")
+# Priority 2: Auto-detect DEG table from attached data asset at /data/deg_table/
+#
+# Two input types are supported:
+#   A) Single flat file (CSV/TSV/TXT) or single RDS  → used directly.
+#   B) Folder structure (e.g. MOSuite moo-properties) → controlled by 'DEG Table File':
+#        "Filtered DEG" → load analyses/diff_filt.csv  (all comparisons, wide format)
+#        "All DEG"      → load diff_{comparison}.csv per comparison, rename columns
+#                         with <comparison>_ prefix, then merge on Gene Names Column.
+#      If neither keyword is set, comparison-ID scoring picks the best matching file.
+#
+# All load paths emit a WARNING if the Gene Names Column contains duplicate values.
+
+load_flat_file <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  if (ext == "csv") {
+    read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   } else {
-    stop("ERROR: No DEG table provided. Please upload a file or attach a DEG table data asset.")
+    read.delim(path, stringsAsFactors = FALSE, check.names = FALSE)
+  }
+}
+
+load_rds_as_df <- function(path) {
+  obj <- readRDS(path)
+  if (is.data.frame(obj)) return(obj)
+  if (is.list(obj)) {
+    df_idx <- which(sapply(obj, is.data.frame))
+    if (length(df_idx) > 0) {
+      cat("  Extracted data frame from list element\n")
+      return(obj[[df_idx[1]]])
+    }
+  }
+  stop(sprintf("ERROR: RDS file '%s' does not contain a data frame.", path))
+}
+
+# Emit a warning if gene_col contains duplicate values in df
+warn_gene_duplicates <- function(df, gene_col, file_label) {
+  if (is.null(gene_col) || !gene_col %in% colnames(df)) return(invisible(NULL))
+  dups     <- df[[gene_col]][duplicated(df[[gene_col]])]
+  n_dup    <- length(dups)
+  if (n_dup > 0) {
+    uniq_dups  <- unique(dups)
+    sample_str <- paste(head(uniq_dups, 5), collapse = ", ")
+    if (length(uniq_dups) > 5) sample_str <- paste0(sample_str, " ...")
+    cat(sprintf(
+      "\nWARNING: %d duplicate value(s) in '%s' column of '%s': %s\n\n",
+      n_dup, gene_col, file_label, sample_str
+    ))
+  }
+}
+
+# Return the first non-empty element of a comma-separated parameter, or default_val
+first_or_default <- function(param_val, default_val) {
+  if (is.null(param_val)) return(default_val)
+  v <- trimws(as.character(param_val))
+  if (nchar(v) == 0 || v == "NULL") return(default_val)
+  trimws(unlist(strsplit(v, ",")))[1]
+}
+
+# Find diff_filt.csv anywhere under base_dir ("Filtered DEG" mode)
+find_filtered_deg_file <- function(base_dir) {
+  all_csv   <- list.files(base_dir, pattern = "\\.csv$", full.names = TRUE,
+                          recursive = TRUE, ignore.case = TRUE)
+  filt_files <- all_csv[tolower(basename(all_csv)) == "diff_filt.csv"]
+  if (length(filt_files) == 0) {
+    stop(paste0(
+      "ERROR: 'Filtered DEG' mode: no 'diff_filt.csv' found under /data/deg_table/.\n",
+      "  Ensure the moo-properties asset is attached and contains analyses/diff_filt.csv."
+    ))
+  }
+  if (length(filt_files) > 1) {
+    cat(sprintf("  Multiple diff_filt.csv found; using: %s\n", filt_files[1]))
+  }
+  cat(sprintf("  Found: %s\n", filt_files[1]))
+  filt_files[1]
+}
+
+# Load diff_{comparison}.csv for every comparison, rename tstat/sig/fc columns
+# with a <comparison>_ prefix, and merge all tables on gene_col ("All DEG" mode).
+# Also updates opt$t_statistic_columns, opt$significance_columns, opt$fold_change_columns
+# so downstream parsing sees the merged column names.
+merge_comparison_files <- function(base_dir, comparisons_vec, gene_col,
+                                   tstat_col, sig_col, fc_col) {
+  cat(sprintf(
+    "  Merging %d per-comparison file(s) joined on '%s'...\n",
+    length(comparisons_vec), gene_col
+  ))
+  all_csv <- list.files(base_dir, pattern = "\\.csv$", full.names = TRUE,
+                        recursive = TRUE, ignore.case = TRUE)
+  merged <- NULL
+
+  for (comp in comparisons_vec) {
+    target <- tolower(paste0("diff_", comp, ".csv"))
+    matches <- all_csv[tolower(basename(all_csv)) == target]
+
+    if (length(matches) == 0) {
+      stop(sprintf(
+        "ERROR: 'All DEG' mode: file 'diff_%s.csv' not found under /data/deg_table/.",
+        comp
+      ))
+    }
+    path <- matches[1]
+    if (length(matches) > 1) cat(sprintf("  [%s] Multiple matches; using: %s\n", comp, path))
+    cat(sprintf("  [%s] Loading: %s\n", comp, path))
+
+    df <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+
+    # Validate required columns
+    required <- unique(c(gene_col, tstat_col, sig_col, fc_col))
+    missing  <- setdiff(required, colnames(df))
+    if (length(missing) > 0) {
+      stop(sprintf(
+        "ERROR: 'diff_%s.csv' is missing column(s): %s\n  Available: %s",
+        comp, paste(missing, collapse = ", "), paste(colnames(df), collapse = ", ")
+      ))
+    }
+
+    # Warn on duplicate gene names within this file
+    warn_gene_duplicates(df, gene_col, paste0("diff_", comp, ".csv"))
+
+    # Select, rename: prepend <comparison>_ to the stat columns
+    comp_df <- df[, unique(c(gene_col, tstat_col, sig_col, fc_col)), drop = FALSE]
+    for (col in c(tstat_col, sig_col, fc_col)) {
+      colnames(comp_df)[colnames(comp_df) == col] <- paste0(comp, "_", col)
+    }
+
+    merged <- if (is.null(merged)) comp_df else merge(merged, comp_df, by = gene_col, all = TRUE)
+    cat(sprintf(
+      "  [%s] Columns added: %s_%s, %s_%s, %s_%s\n",
+      comp, comp, tstat_col, comp, sig_col, comp, fc_col
+    ))
+  }
+
+  cat(sprintf("  Merged table: %d row(s) x %d column(s)\n", nrow(merged), ncol(merged)))
+  merged
+}
+
+if (is.null(deg_table)) {
+  # Detect explicit keyword in DEG Table File (only if it is NOT a real file path)
+  deg_input_mode <- ""
+  if (!is.null(opt$deg_file) && nchar(trimws(opt$deg_file)) > 0) {
+    candidate <- trimws(opt$deg_file)
+    if (tolower(candidate) %in% c("filtered deg", "all deg")) {
+      deg_input_mode <- tolower(candidate)
+      cat(sprintf("DEG Table File mode: '%s'\n", candidate))
+    }
+  }
+
+  cat("Auto-detecting DEG table in /data/deg_table/...\n")
+  csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$",
+                          full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+  rds_files  <- list.files("/data/deg_table", pattern = "\\.rds$",
+                           full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+  cat(sprintf("  Found %d flat file(s) [CSV/TSV/TXT] and %d RDS file(s)\n",
+              length(csv_files), length(rds_files)))
+
+  # ── "Filtered DEG": load diff_filt.csv ──────────────────────────────────────
+  if (deg_input_mode == "filtered deg") {
+    cat("  Mode: Filtered DEG — searching for diff_filt.csv\n")
+    input_file_path <- find_filtered_deg_file("/data/deg_table")
+    deg_table       <- load_flat_file(input_file_path)
+    warn_gene_duplicates(deg_table, opt$gene_names_column, "diff_filt.csv")
+    log_time("Loaded diff_filt.csv (Filtered DEG mode)")
+
+  # ── "All DEG": load & merge per-comparison files ─────────────────────────────
+  } else if (deg_input_mode == "all deg") {
+    cat("  Mode: All DEG — loading and merging per-comparison files\n")
+    if (is.null(opt$comparisons) || nchar(trimws(opt$comparisons)) == 0) {
+      stop("ERROR: 'All DEG' mode requires the 'Comparisons' parameter to be set.")
+    }
+    comparisons_vec <- trimws(unlist(strsplit(opt$comparisons, ",")))
+    tstat_col <- first_or_default(opt$t_statistic_columns, "tstat")
+    sig_col   <- first_or_default(opt$significance_columns, "adjpval")
+    fc_col    <- first_or_default(opt$fold_change_columns,  "FC")
+    cat(sprintf(
+      "  Per-file column names: gene='%s'  tstat='%s'  sig='%s'  fc='%s'\n",
+      opt$gene_names_column, tstat_col, sig_col, fc_col
+    ))
+
+    deg_table <- merge_comparison_files(
+      "/data/deg_table", comparisons_vec,
+      opt$gene_names_column, tstat_col, sig_col, fc_col
+    )
+    input_file_path <- sprintf(
+      "All DEG merge of: %s",
+      paste(paste0("diff_", comparisons_vec, ".csv"), collapse = ", ")
+    )
+    warn_gene_duplicates(deg_table, opt$gene_names_column, "merged table")
+
+    # Update column override opts so downstream parse_comma_sep picks up merged names
+    opt$t_statistic_columns <- paste(paste0(comparisons_vec, "_", tstat_col), collapse = ",")
+    opt$significance_columns <- paste(paste0(comparisons_vec, "_", sig_col),   collapse = ",")
+    opt$fold_change_columns  <- paste(paste0(comparisons_vec, "_", fc_col),    collapse = ",")
+    cat(sprintf("  Updated T-Statistic Columns → %s\n", opt$t_statistic_columns))
+    cat(sprintf("  Updated Significance Columns → %s\n", opt$significance_columns))
+    cat(sprintf("  Updated Fold Change Columns  → %s\n", opt$fold_change_columns))
+    log_time("Loaded and merged per-comparison files (All DEG mode)")
+
+  # ── Auto Case 1: single flat file ────────────────────────────────────────────
+  } else if (length(csv_files) == 1) {
+    input_file_path <- csv_files[1]
+    cat(sprintf("  Single flat file detected — loading: %s\n", input_file_path))
+    deg_table <- load_flat_file(input_file_path)
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time("Loaded single flat file from data asset")
+
+  # ── Auto Case 2: multiple flat files — score by comparison IDs ───────────────
+  } else if (length(csv_files) > 1) {
+    comparisons_vec_local <- character(0)
+    if (!is.null(opt$comparisons) && nchar(trimws(opt$comparisons)) > 0) {
+      comparisons_vec_local <- trimws(unlist(strsplit(opt$comparisons, ",")))
+    }
+
+    if (length(comparisons_vec_local) > 0) {
+      scores    <- sapply(csv_files, function(f) {
+        sum(sapply(comparisons_vec_local, function(cmp) grepl(cmp, f, fixed = TRUE)))
+      })
+      best_score <- max(scores)
+      if (best_score > 0) {
+        matched         <- csv_files[scores == best_score]
+        input_file_path <- matched[1]
+        cat(sprintf(
+          "  Comparison-matched file (%d/%d IDs in path): %s\n",
+          best_score, length(comparisons_vec_local), input_file_path
+        ))
+        if (length(matched) > 1)
+          cat(sprintf(
+            "  (%d files tied; using first. Set 'DEG Table File' to select explicitly.)\n",
+            length(matched)
+          ))
+      } else {
+        input_file_path <- csv_files[1]
+        cat(sprintf("  No comparison-matched file; using first: %s\n", input_file_path))
+        cat("  Tip: use 'Filtered DEG' or 'All DEG' for moo-properties assets,")
+        cat(" or set 'DEG Table File' explicitly.\n")
+      }
+    } else {
+      input_file_path <- csv_files[1]
+      cat(sprintf("  Multiple flat files; using first: %s\n", input_file_path))
+      cat("  Tip: set 'DEG Table File' ('Filtered DEG', 'All DEG', or a path) to improve selection.\n")
+    }
+    deg_table <- load_flat_file(input_file_path)
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time("Loaded flat file from data asset (multi-file asset)")
+
+  # ── Auto Case 3: no flat files, single RDS ───────────────────────────────────
+  } else if (length(rds_files) == 1) {
+    input_file_path <- rds_files[1]
+    cat(sprintf("  Single RDS file detected — loading: %s\n", input_file_path))
+    deg_table <- load_rds_as_df(input_file_path)
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time("Loaded single RDS file from data asset")
+
+  # ── Auto Case 4: no flat files, multiple RDS ─────────────────────────────────
+  } else if (length(rds_files) > 1) {
+    input_file_path <- rds_files[1]
+    cat(sprintf("  Multiple RDS files; using first: %s\n", input_file_path))
+    cat("  Tip: set 'DEG Table File' to select a specific file.\n")
+    deg_table <- load_rds_as_df(input_file_path)
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time("Loaded RDS file from data asset (multi-file asset)")
+
+  # ── Case 5: nothing found ─────────────────────────────────────────────────────
+  } else {
+    stop(paste0(
+      "ERROR: No DEG table found in /data/deg_table/. ",
+      "Set 'DEG Table File' to a path, 'Filtered DEG', or 'All DEG'; ",
+      "or attach a data asset with mount name 'deg_table'."
+    ))
   }
 }
 
@@ -477,6 +725,20 @@ if (is.null(deg_table)) {
 if (!is.data.frame(deg_table)) {
   stop("ERROR: Loaded data is not a data frame")
 }
+
+# ── DEG table input summary ──────────────────────────────────────────────────
+cat("\n")
+cat("=== DEG Table Input ===\n")
+if (exists("input_file_path") && !is.null(input_file_path) && nchar(input_file_path) > 0) {
+  cat(sprintf("  File   : %s\n", input_file_path))
+} else if (!is.null(opt$deg_file) && tolower(trimws(opt$deg_file)) == "all deg") {
+  cat(sprintf("  Mode   : All DEG (merged per-comparison files)\n"))
+}
+cat(sprintf("  Rows   : %d\n", nrow(deg_table)))
+cat(sprintf("  Columns: %d  [%s]\n",
+            ncol(deg_table),
+            paste(head(colnames(deg_table), 6), collapse = ", ")))
+cat("=======================\n\n")
 
 # Validate gene names column exists
 available_cols <- colnames(deg_table)
