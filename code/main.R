@@ -545,9 +545,31 @@ merge_comparison_files <- function(base_dir, comparisons_vec, gene_col,
     matches <- all_csv[tolower(basename(all_csv)) == target]
 
     if (length(matches) == 0) {
+      # Scan for available diff_*.csv files and extract contrast names for guidance
+      available_diff <- all_csv[grepl("^diff_.*\\.csv$", tolower(basename(all_csv)))]
+      available_contrasts <- sub("^diff_", "", sub("\\.csv$", "", basename(available_diff),
+                                                   ignore.case = TRUE), ignore.case = TRUE)
+      cat(sprintf(
+        "\n=== ERROR: File not found for comparison '%s' ===\n", comp
+      ))
+      cat(sprintf("  Expected file: diff_%s.csv\n", comp))
+      cat(sprintf("  You specified: Comparisons = '%s'\n",
+                  paste(comparisons_vec, collapse = ", ")))
+      if (length(available_contrasts) > 0) {
+        cat("\n  Available contrasts in the dataset (based on diff_*.csv filenames):\n")
+        for (ac in sort(available_contrasts)) {
+          cat(sprintf("    - %s\n", ac))
+        }
+        cat("\n  Tip: Update the 'Comparisons' parameter to match one or more of the above.\n")
+      } else {
+        cat("  No diff_*.csv files found in the dataset at all.\n")
+        cat("  Ensure the attached asset is a MOSuite moo-properties output with an analyses/diff/ folder.\n")
+      }
+      cat("\n")
       stop(sprintf(
-        "ERROR: 'All DEG' mode: file 'diff_%s.csv' not found under /data/deg_table/.",
-        comp
+        "File 'diff_%s.csv' not found. Check the Comparisons parameter. Available: %s",
+        comp,
+        if (length(available_contrasts) > 0) paste(sort(available_contrasts), collapse = ", ") else "none"
       ))
     }
     path <- matches[1]
