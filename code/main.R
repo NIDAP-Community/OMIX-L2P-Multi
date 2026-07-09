@@ -870,52 +870,121 @@ fc_cols <- parse_comma_sep(opt$fold_change_columns)
 collections_vec <- parse_comma_sep(opt$collections)
 log_time("Parsed column parameters")
 
+# ── Validate all required columns are present in deg_table ──────────────────
+# Build a named list of every column we expect to find, flagging which
+# parameter specified each one so the error message is actionable.
+validate_columns_in_table <- function(cols, param_name, available_cols) {
+  if (is.null(cols) || length(cols) == 0) return(invisible(NULL))
+  missing <- setdiff(cols, available_cols)
+  if (length(missing) > 0) {
+    cat(sprintf("\n=== ERROR: Column(s) not found in DEG table ===\n"))
+    cat(sprintf("Parameter '%s' specifies: %s\n", param_name, paste(cols, collapse = ", ")))
+    cat(sprintf("Missing column(s): %s\n", paste(missing, collapse = ", ")))
+    cat(sprintf("Available columns (%d total):\n", length(available_cols)))
+    cat(paste("  -", available_cols, collapse = "\n"))
+    cat("\n")
+    stop(sprintf(
+      "Column(s) specified in '%s' not found in data: %s",
+      param_name, paste(missing, collapse = ", ")
+    ))
+  }
+}
+
+# Auto-expand a single bare column name (e.g. "tstat") to comparison-prefixed
+# equivalents (e.g. "B-A_tstat, C-A_tstat") when the table is in wide format.
+# Returns the expanded vector; leaves multi-value or already-found params unchanged.
+auto_expand_col <- function(cols, param_name, comparisons_vec, available_cols) {
+  if (is.null(cols) || length(cols) != 1) return(cols)      # multi-value: no change
+  if (cols[1] %in% available_cols) return(cols)              # found as-is: no change
+  if (is.null(comparisons_vec) || length(comparisons_vec) == 0) return(cols)
+  expanded <- paste0(comparisons_vec, "_", cols[1])
+  if (all(expanded %in% available_cols)) {
+    cat(sprintf(
+      "  Auto-expanded '%s': '%s' → '%s' (wide-format table)\n",
+      param_name, cols[1], paste(expanded, collapse = ", ")
+    ))
+    return(expanded)
+  }
+  return(cols)  # can't expand — will fail in validate step with helpful message
+}
+
+available_cols <- colnames(deg_table)
+
+# Auto-expand bare column names to comparison-prefixed form (handles diff_filt.csv)
+if (!is.null(t_stat_cols)) {
+  t_stat_cols <- auto_expand_col(t_stat_cols, "T-Statistic Columns", comparisons_vec, available_cols)
+  opt$t_statistic_columns <- paste(t_stat_cols, collapse = ",")
+}
+if (!is.null(sig_cols)) {
+  sig_cols <- auto_expand_col(sig_cols, "Significance Columns", comparisons_vec, available_cols)
+  opt$significance_columns <- paste(sig_cols, collapse = ",")
+}
+if (!is.null(fc_cols)) {
+  fc_cols <- auto_expand_col(fc_cols, "Fold Change Columns", comparisons_vec, available_cols)
+  opt$fold_change_columns <- paste(fc_cols, collapse = ",")
+}
+
+validate_columns_in_table(t_stat_cols, "T-Statistic Columns", available_cols)
+validate_columns_in_table(sig_cols,    "Significance Columns", available_cols)
+validate_columns_in_table(fc_cols,     "Fold Change Columns",  available_cols)
+
+# When column overrides are NOT set, the analysis derives names from comparisons.
+# Validate those derived names are present so the run fails early with clear guidance.
+if (!is.null(comparisons_vec) && length(comparisons_vec) > 0 &&
+    (is.null(t_stat_cols) || is.null(sig_cols) || is.null(fc_cols))) {
+  # Determine the suffix pattern actually used by the data (tstat vs _tstat etc.)
+  # We check derived names only for whichever columns are NOT explicitly overridden.
+  derived_missing <- character(0)
+  for (comp in comparisons_vec) {
+    if (is.null(t_stat_cols)) {
+      col <- paste0(comp, "_tstat")
+      if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
+    }
+    if (is.null(sig_cols)) {
+      col <- paste0(comp, "_pval")
+      if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
+    }
+    if (is.null(fc_cols)) {
+      col <- paste0(comp, "_FC")
+      if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
+    }
+  }
+  if (length(derived_missing) > 0) {
+    cat("\n=== ERROR: Derived column(s) not found in DEG table ===\n")
+    cat(sprintf("Comparisons: %s\n", paste(comparisons_vec, collapse = ", ")))
+    cat(sprintf("Expected column(s) missing: %s\n", paste(derived_missing, collapse = ", ")))
+    cat("Columns in data that contain a comparison ID:\n")
+    for (comp in comparisons_vec) {
+      matches <- grep(comp, available_cols, value = TRUE, fixed = TRUE)
+      if (length(matches) > 0)
+        cat(sprintf("  '%s' matches: %s\n", comp, paste(matches, collapse = ", ")))
+    }
+    cat(sprintf("\nAll available columns (%d):\n", length(available_cols)))
+    cat(paste("  -", available_cols, collapse = "\n"))
+    cat("\n")
+    stop(paste0(
+      "Derived column(s) missing from DEG table: ",
+      paste(derived_missing, collapse = ", "),
+      ". Use the Column Overrides to specify the actual column names, ",
+      "or ensure Comparisons matches the column prefix used in your file."
+    ))
+  }
+}
+log_time("Validated column presence in DEG table")
+
 cat("\n=== L2P Multi-Comparison Analysis ===\n")
 cat(sprintf("Species: %s\n", opt$species))
 cat(sprintf("Collections: %s\n", paste(collections_vec, collapse = ", ")))
 cat(sprintf("Select by rank: %s\n", opt$select_by_rank))
 if (!is.null(comparisons_vec)) {
   cat(sprintf("Comparisons: %s\n", paste(comparisons_vec, collapse = ", ")))
-  cat("\nDerived column names:\n")
-  for (comp in comparisons_vec) {
-    cat(sprintf("  %s_tstat, %s_pval, %s_FC\n", comp, comp, comp))
-  }
-  cat("\nSearching for these in the data...\n")
-  all_cols <- colnames(deg_table)
-  for (comp in comparisons_vec) {
-    tstat_col <- paste0(comp, "_tstat")
-    pval_col <- paste0(comp, "_pval")
-    fc_col <- paste0(comp, "_FC")
-    cat(sprintf(
-      "  %s: %s\n",
-      tstat_col,
-      ifelse(tstat_col %in% all_cols, "✓ FOUND", "✗ MISSING")
-    ))
-    cat(sprintf(
-      "  %s: %s\n",
-      pval_col,
-      ifelse(pval_col %in% all_cols, "✓ FOUND", "✗ MISSING")
-    ))
-    cat(sprintf(
-      "  %s: %s\n",
-      fc_col,
-      ifelse(fc_col %in% all_cols, "✓ FOUND", "✗ MISSING")
-    ))
-  }
-
-  # Show columns that might match
-  cat("\nColumns in data that contain comparison names:\n")
-  for (comp in comparisons_vec) {
-    matching <- grep(comp, all_cols, value = TRUE, fixed = TRUE)
-    if (length(matching) > 0) {
-      cat(sprintf(
-        "  Matching '%s': %s\n",
-        comp,
-        paste(matching, collapse = ", ")
-      ))
-    }
-  }
 }
+# Show the actual column names that passed validation
+cat("\nColumn mapping (validated):\n")
+cat(sprintf("  Gene names  : %s\n", opt$gene_names_column))
+cat(sprintf("  T-statistic : %s\n", if (!is.null(t_stat_cols)) paste(t_stat_cols, collapse = ", ") else "(auto-derived from Comparisons)"))
+cat(sprintf("  Significance: %s\n", if (!is.null(sig_cols))    paste(sig_cols, collapse = ", ")    else "(auto-derived from Comparisons)"))
+cat(sprintf("  Fold change : %s\n", if (!is.null(fc_cols))     paste(fc_cols, collapse = ", ")     else "(auto-derived from Comparisons)"))
 cat("\n")
 
 # Run L2P Multi analysis
