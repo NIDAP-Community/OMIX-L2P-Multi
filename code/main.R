@@ -631,17 +631,17 @@ if (is.null(deg_table)) {
                 length(csv_files), length(rds_files)))
   }
 
-  # ── "Filtered DEG": load diff_filt.csv from /data/input/ ────────────────────
+  # ── "Filtered DEG": load diff_filt.csv from /data/deg_table/ ───────────────
   if (deg_input_mode == "filtered deg") {
-    cat("  Mode: Filtered DEG — searching for diff_filt.csv in /data/input/\n")
-    input_file_path <- find_filtered_deg_file("/data/input")
+    cat("  Mode: Filtered DEG — searching for diff_filt.csv in /data/deg_table/\n")
+    input_file_path <- find_filtered_deg_file("/data/deg_table")
     deg_table       <- load_flat_file(input_file_path)
     warn_gene_duplicates(deg_table, opt$gene_names_column, "diff_filt.csv")
     log_time("Loaded diff_filt.csv (Filtered DEG mode)")
 
-  # ── "All DEG": load & merge per-comparison files from /data/input/ ───────────
+  # ── "All DEG": load & merge per-comparison files from /data/deg_table/ ──────
   } else if (deg_input_mode == "all deg") {
-    cat("  Mode: All DEG — loading and merging per-comparison files from /data/input/\n")
+    cat("  Mode: All DEG — loading and merging per-comparison files from /data/deg_table/\n")
     if (is.null(opt$comparisons) || nchar(trimws(opt$comparisons)) == 0) {
       stop("ERROR: 'All DEG' mode requires the 'Comparisons' parameter to be set.")
     }
@@ -655,7 +655,7 @@ if (is.null(deg_table)) {
     ))
 
     deg_table <- merge_comparison_files(
-      "/data/input", comparisons_vec,
+      "/data/deg_table", comparisons_vec,
       opt$gene_names_column, tstat_col, sig_col, fc_col
     )
     input_file_path <- sprintf(
@@ -673,14 +673,14 @@ if (is.null(deg_table)) {
     cat(sprintf("  Updated Fold Change Columns  → %s\n", opt$fold_change_columns))
     log_time("Loaded and merged per-comparison files (All DEG mode)")
 
-  # ── "Table": auto-detect flat file / RDS from /data/input/ ───────────────────
+  # ── "Table": auto-detect flat file / RDS from /data/deg_table/ ───────────────
   } else if (deg_input_mode == "table") {
-    cat("  Mode: Table — auto-detecting flat DEG table in /data/input/\n")
-    input_csv <- list.files("/data/input", pattern = "\\.(csv|tsv|txt)$",
+    cat("  Mode: Table — auto-detecting flat DEG table in /data/deg_table/\n")
+    input_csv <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$",
                             full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    input_rds  <- list.files("/data/input", pattern = "\\.rds$",
+    input_rds  <- list.files("/data/deg_table", pattern = "\\.rds$",
                              full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    cat(sprintf("  Found %d flat file(s) and %d RDS file(s) in /data/input/\n",
+    cat(sprintf("  Found %d flat file(s) and %d RDS file(s) in /data/deg_table/\n",
                 length(input_csv), length(input_rds)))
 
     if (length(input_csv) == 1) {
@@ -717,10 +717,9 @@ if (is.null(deg_table)) {
       log_time("Loaded RDS file from /data/input/ (Table mode)")
 
     } else {
-      cat("\n=== ERROR: No DEG table found in /data/input/ ===\n")
-      cat("  'Table' mode requires a data asset attached with mount name 'input'.\n")
-      cat("  Attach your DEG table CSV/TSV/RDS as a dataset and set its mount to 'input'.\n\n")
-      stop("No DEG table found in /data/input/. Attach a dataset with mount name 'input'.")
+      cat("\n=== ERROR: No DEG table found in /data/deg_table/ (Table mode) ===\n")
+      cat("  Attach your DEG table (CSV/TSV/RDS) as a dataset with mount name 'deg_table'.\n\n")
+      stop("No DEG table found in /data/deg_table/. Attach a dataset with mount name 'deg_table'.")
     }
 
   # ── Auto Case 1: single flat file in /data/deg_table/ ────────────────────────

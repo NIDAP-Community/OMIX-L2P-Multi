@@ -3,13 +3,13 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "Data mounts and modes:\n- **(blank)**: demo data auto-detected from mount 'deg_table'\n- **Table**: flat DEG table (CSV/TSV/RDS) attached with mount name 'input'\n- **Filtered DEG**: MOSuite moo-properties asset (mount 'input') — after 'filter differential expression'\n- **All DEG** (default): MOSuite moo-properties asset (mount 'input') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
+		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- **(blank)**: auto-detects a single flat file or RDS from mount 'deg_table'\n- **Table**: same as blank — auto-detects a flat file from mount 'deg_table'\n- **Filtered DEG**: MOSuite moo-properties asset (mount 'deg_table') — after 'filter differential expression'\n- **All DEG** (default): MOSuite moo-properties asset (mount 'deg_table') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
 	},
 	"datasets": [
 		{
 			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
 			"name": "Demo DEG Table",
-			"help_text": "Demo Mouse RNA-seq data. Used when 'DEG Table File' is blank (mount: deg_table)."
+			"help_text": "Demo Mouse RNA-seq data (mount: deg_table). Replaced automatically when you attach your own dataset with the same mount name."
 		}
 	],
 	"categories": [
@@ -50,8 +50,8 @@
 			"category": "basic",
 			"name": "DEG Table File",
 			"param_name": "deg_file",
-			"description": "Input mode and mount to use. blank = demo data from mount 'deg_table'. Table/Filtered DEG/All DEG = data from mount 'input'. Attach your dataset with mount name 'input' before selecting one of these modes.",
-			"help_text": "Blank: demo data auto-detected from /data/deg_table/ (mount name: deg_table).\n\nTable: your own flat DEG table (CSV/TSV/RDS) attached with mount name 'input'. The file is auto-detected from /data/input/.\n\nFiltered DEG: MOSuite moo-properties asset attached with mount name 'input'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset attached with mount name 'input'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
+			"description": "Input mode. All modes read from mount 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo data.",
+			"help_text": "Blank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
 			"type": "list",
 			"value_type": "string",
 			"default_value": "All DEG",
