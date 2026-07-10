@@ -3,7 +3,7 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- **(blank)**: auto-detects a single flat file or RDS from mount 'deg_table'\n- **Table**: same as blank — auto-detects a flat file from mount 'deg_table'\n- **Filtered DEG**: MOSuite moo-properties asset (mount 'deg_table') — after 'filter differential expression'\n- **All DEG** (default): MOSuite moo-properties asset (mount 'deg_table') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
+		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank): auto-detects a single flat file or RDS from mount 'deg_table'\n- Table: same as blank — auto-detects a flat file from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset (mount 'deg_table') — after 'filter differential expression'\n- All DEG (default): MOSuite moo-properties asset (mount 'deg_table') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
 	},
 	"datasets": [
 		{
@@ -50,7 +50,7 @@
 			"category": "basic",
 			"name": "DEG Table File",
 			"param_name": "deg_file",
-			"description": "Select the differential analysis input type. **Table** - uses a single flat table with differential analysis information. **Filtered DEG** - uses data from Filter Differential Analysis. **All DEG** - uses data from Differential Expression Analysis.",
+			"description": "Select the differential analysis input type. Table - uses a single flat table with differential analysis information. Filtered DEG - uses data from Filter Differential Analysis. All DEG - uses data from Differential Expression Analysis.",
 			"help_text": "Blank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
 			"type": "list",
 			"value_type": "string",
