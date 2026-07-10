@@ -631,17 +631,17 @@ if (is.null(deg_table)) {
                 length(csv_files), length(rds_files)))
   }
 
-  # ── "Filtered DEG": load diff_filt.csv from /data/deg_table/ ───────────────
+  # ── "Filtered DEG": load diff_filt.csv ─────────────────────────────────────
   if (deg_input_mode == "filtered deg") {
-    cat("  Mode: Filtered DEG — searching for diff_filt.csv in /data/deg_table/\n")
-    input_file_path <- find_filtered_deg_file("/data/deg_table")
+    cat("  Mode: Filtered DEG — searching for diff_filt.csv under /data/\n")
+    input_file_path <- find_filtered_deg_file("/data")
     deg_table       <- load_flat_file(input_file_path)
     warn_gene_duplicates(deg_table, opt$gene_names_column, "diff_filt.csv")
     log_time("Loaded diff_filt.csv (Filtered DEG mode)")
 
-  # ── "All DEG": load & merge per-comparison files from /data/deg_table/ ──────
+  # ── "All DEG": load & merge per-comparison files ─────────────────────────────
   } else if (deg_input_mode == "all deg") {
-    cat("  Mode: All DEG — loading and merging per-comparison files from /data/deg_table/\n")
+    cat("  Mode: All DEG — loading and merging per-comparison files from /data/\n")
     if (is.null(opt$comparisons) || nchar(trimws(opt$comparisons)) == 0) {
       stop("ERROR: 'All DEG' mode requires the 'Comparisons' parameter to be set.")
     }
@@ -655,7 +655,7 @@ if (is.null(deg_table)) {
     ))
 
     deg_table <- merge_comparison_files(
-      "/data/deg_table", comparisons_vec,
+      "/data", comparisons_vec,
       opt$gene_names_column, tstat_col, sig_col, fc_col
     )
     input_file_path <- sprintf(
