@@ -613,34 +613,35 @@ if (is.null(deg_table)) {
   deg_input_mode <- ""
   if (!is.null(opt$deg_file) && nchar(trimws(opt$deg_file)) > 0) {
     candidate <- trimws(opt$deg_file)
-    if (tolower(candidate) %in% c("filtered deg", "all deg")) {
+    if (tolower(candidate) %in% c("filtered deg", "all deg", "table")) {
       deg_input_mode <- tolower(candidate)
       cat(sprintf("DEG Table File mode: '%s'\n", candidate))
     }
   }
 
+  # Scans used by blank (demo) auto-detect mode — /data/deg_table/
   csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$",
                           full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
   rds_files  <- list.files("/data/deg_table", pattern = "\\.rds$",
                            full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
   if (nchar(deg_input_mode) == 0) {
-    # Only show auto-detect header and file count when no explicit mode is set
-    cat("Auto-detecting DEG table in /data/deg_table/...\n")
+    # Only show auto-detect header and file count for blank (demo) mode
+    cat("Auto-detecting DEG table in /data/deg_table/ (demo data)...\n")
     cat(sprintf("  Found %d flat file(s) [CSV/TSV/TXT] and %d RDS file(s)\n",
                 length(csv_files), length(rds_files)))
   }
 
-  # ── "Filtered DEG": load diff_filt.csv ──────────────────────────────────────
+  # ── "Filtered DEG": load diff_filt.csv from /data/input/ ────────────────────
   if (deg_input_mode == "filtered deg") {
-    cat("  Mode: Filtered DEG — searching for diff_filt.csv\n")
-    input_file_path <- find_filtered_deg_file("/data/deg_table")
+    cat("  Mode: Filtered DEG — searching for diff_filt.csv in /data/input/\n")
+    input_file_path <- find_filtered_deg_file("/data/input")
     deg_table       <- load_flat_file(input_file_path)
     warn_gene_duplicates(deg_table, opt$gene_names_column, "diff_filt.csv")
     log_time("Loaded diff_filt.csv (Filtered DEG mode)")
 
-  # ── "All DEG": load & merge per-comparison files ─────────────────────────────
+  # ── "All DEG": load & merge per-comparison files from /data/input/ ───────────
   } else if (deg_input_mode == "all deg") {
-    cat("  Mode: All DEG — loading and merging per-comparison files\n")
+    cat("  Mode: All DEG — loading and merging per-comparison files from /data/input/\n")
     if (is.null(opt$comparisons) || nchar(trimws(opt$comparisons)) == 0) {
       stop("ERROR: 'All DEG' mode requires the 'Comparisons' parameter to be set.")
     }
@@ -654,7 +655,7 @@ if (is.null(deg_table)) {
     ))
 
     deg_table <- merge_comparison_files(
-      "/data/deg_table", comparisons_vec,
+      "/data/input", comparisons_vec,
       opt$gene_names_column, tstat_col, sig_col, fc_col
     )
     input_file_path <- sprintf(
@@ -672,7 +673,57 @@ if (is.null(deg_table)) {
     cat(sprintf("  Updated Fold Change Columns  → %s\n", opt$fold_change_columns))
     log_time("Loaded and merged per-comparison files (All DEG mode)")
 
-  # ── Auto Case 1: single flat file ────────────────────────────────────────────
+  # ── "Table": auto-detect flat file / RDS from /data/input/ ───────────────────
+  } else if (deg_input_mode == "table") {
+    cat("  Mode: Table — auto-detecting flat DEG table in /data/input/\n")
+    input_csv <- list.files("/data/input", pattern = "\\.(csv|tsv|txt)$",
+                            full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+    input_rds  <- list.files("/data/input", pattern = "\\.rds$",
+                             full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+    cat(sprintf("  Found %d flat file(s) and %d RDS file(s) in /data/input/\n",
+                length(input_csv), length(input_rds)))
+
+    if (length(input_csv) == 1) {
+      input_file_path <- input_csv[1]
+      cat(sprintf("  Single flat file — loading: %s\n", input_file_path))
+      deg_table <- load_flat_file(input_file_path)
+      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+      log_time("Loaded flat file from /data/input/ (Table mode)")
+
+    } else if (length(input_csv) > 1) {
+      # Score by comparison IDs if set
+      comparisons_vec_t <- if (!is.null(opt$comparisons) && nchar(trimws(opt$comparisons)) > 0)
+        trimws(unlist(strsplit(opt$comparisons, ","))) else character(0)
+      if (length(comparisons_vec_t) > 0) {
+        scores_t <- sapply(input_csv, function(f) {
+          sum(sapply(comparisons_vec_t, function(cmp) grepl(cmp, f, fixed = TRUE)))
+        })
+        best_t <- max(scores_t)
+        input_file_path <- if (best_t > 0) input_csv[scores_t == best_t][1] else input_csv[1]
+        cat(sprintf("  Selected: %s\n", input_file_path))
+      } else {
+        input_file_path <- input_csv[1]
+        cat(sprintf("  Multiple flat files; using first: %s\n", input_file_path))
+      }
+      deg_table <- load_flat_file(input_file_path)
+      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+      log_time("Loaded flat file from /data/input/ (Table mode)")
+
+    } else if (length(input_rds) == 1) {
+      input_file_path <- input_rds[1]
+      cat(sprintf("  Single RDS file — loading: %s\n", input_file_path))
+      deg_table <- load_rds_as_df(input_file_path)
+      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+      log_time("Loaded RDS file from /data/input/ (Table mode)")
+
+    } else {
+      cat("\n=== ERROR: No DEG table found in /data/input/ ===\n")
+      cat("  'Table' mode requires a data asset attached with mount name 'input'.\n")
+      cat("  Attach your DEG table CSV/TSV/RDS as a dataset and set its mount to 'input'.\n\n")
+      stop("No DEG table found in /data/input/. Attach a dataset with mount name 'input'.")
+    }
+
+  # ── Auto Case 1: single flat file in /data/deg_table/ ────────────────────────
   } else if (length(csv_files) == 1) {
     input_file_path <- csv_files[1]
     cat(sprintf("  Single flat file detected — loading: %s\n", input_file_path))
@@ -707,13 +758,12 @@ if (is.null(deg_table)) {
       } else {
         input_file_path <- csv_files[1]
         cat(sprintf("  No comparison-matched file; using first: %s\n", input_file_path))
-        cat("  Tip: use 'Filtered DEG' or 'All DEG' for moo-properties assets,")
-        cat(" or set 'DEG Table File' explicitly.\n")
+        cat("  Tip: use 'Table', 'Filtered DEG', or 'All DEG' for user-supplied data.\n")
       }
     } else {
       input_file_path <- csv_files[1]
       cat(sprintf("  Multiple flat files; using first: %s\n", input_file_path))
-      cat("  Tip: set 'DEG Table File' ('Filtered DEG', 'All DEG', or a path) to improve selection.\n")
+      cat("  Tip: set 'DEG Table File' to 'Table', 'Filtered DEG', or 'All DEG' for user data.\n")
     }
     deg_table <- load_flat_file(input_file_path)
     warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
@@ -736,48 +786,40 @@ if (is.null(deg_table)) {
     warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
     log_time("Loaded RDS file from data asset (multi-file asset)")
 
-  # ── Case 5: nothing found — scan broadly and suggest the right mode ──────────
+  # ── Case 5: nothing found in /data/deg_table/ — scan broadly ────────────────
   } else {
-    # Scan for any file at all to help diagnose what's actually in the dataset
     all_files <- list.files("/data/deg_table", full.names = TRUE,
                             recursive = TRUE, all.files = FALSE)
     cat("\n=== ERROR: No DEG table found in /data/deg_table/ ===\n")
 
     if (length(all_files) == 0) {
       cat("  The mount /data/deg_table/ appears to be empty.\n")
-      cat("  Make sure a data asset is attached with mount name 'deg_table'.\n")
     } else {
-      cat(sprintf("  Found %d file(s) in the dataset but none are flat tables or RDS.\n",
+      cat(sprintf("  Found %d file(s) but none are flat tables or RDS.\n",
                   length(all_files)))
-      # Check for moo-properties folder structure
-      diff_files <- all_files[grepl("^diff_.*\\.csv$", tolower(basename(all_files)))]
-      filt_file  <- all_files[tolower(basename(all_files)) == "diff_filt.csv"]
+    }
 
-      if (length(diff_files) > 0 || length(filt_file) > 0) {
-        cat("\n  This looks like a MOSuite moo-properties asset.\n")
-        cat("  Set 'DEG Table File' to one of:\n")
-        if (length(filt_file) > 0) {
-          cat("    'Filtered DEG'  — loads analyses/diff_filt.csv (filtered genes, all comparisons)\n")
-        }
-        if (length(diff_files) > 0) {
-          contrasts <- sub("^diff_", "", sub("\\.csv$", "", basename(diff_files),
-                                            ignore.case = TRUE), ignore.case = TRUE)
-          cat("    'All DEG'       — merges per-comparison files\n")
-          cat(sprintf("                      Available contrasts: %s\n",
-                      paste(sort(contrasts), collapse = ", ")))
-        }
+    # Also check /data/input/ to guide users who attached to the wrong mount
+    input_files <- list.files("/data/input", full.names = TRUE,
+                              recursive = TRUE, all.files = FALSE)
+    if (length(input_files) > 0) {
+      cat(sprintf("\n  Note: /data/input/ has %d file(s).\n", length(input_files)))
+      diff_f <- input_files[grepl("^diff_.*\\.csv$", tolower(basename(input_files)))]
+      filt_f <- input_files[tolower(basename(input_files)) == "diff_filt.csv"]
+      if (length(diff_f) > 0 || length(filt_f) > 0) {
+        cat("  A MOSuite moo-properties asset is attached at /data/input/.\n")
+        cat("  Set 'DEG Table File' to 'Filtered DEG' or 'All DEG' to use it.\n")
       } else {
-        cat("  Files found in dataset:\n")
-        for (f in head(all_files, 10)) cat(sprintf("    %s\n", f))
-        if (length(all_files) > 10)
-          cat(sprintf("    ... and %d more\n", length(all_files) - 10))
-        cat("\n  The attached asset does not appear to be a supported DEG table format.\n")
+        cat("  A data asset is attached at /data/input/. Set 'DEG Table File' to 'Table'.\n")
       }
+    } else {
+      cat("\n  To provide data:\n")
+      cat("    blank       — attach a flat DEG table with mount name 'deg_table'\n")
+      cat("    'Table'     — attach a flat DEG table with mount name 'input'\n")
+      cat("    'All DEG' / 'Filtered DEG' — attach a MOSuite moo-properties asset with mount name 'input'\n")
     }
     cat("\n")
-    stop(paste0(
-      "No DEG table found. Check 'DEG Table File' mode and attached dataset."
-    ))
+    stop("No DEG table found. Check the attached dataset and 'DEG Table File' mode.")
   }
 }
 

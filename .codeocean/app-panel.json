@@ -3,13 +3,13 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "START HERE:\n1. **(blank)**: input is a single flat DEG table — auto-detected from the attached dataset\n2. **Filtered DEG**: use after MOSuite ‘filter differential expression’ — loads analyses/diff_filt.csv (filtered genes, all comparisons combined)\n3. **All DEG** (default): use after MOSuite ‘differential expression analysis’ — loads and merges per-comparison diff_{comparison}.csv files (all genes, ranked)\n4. In a pipeline, pass a full file path directly via --deg_file\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
+		"instructions": "Data mounts and modes:\n- **(blank)**: demo data auto-detected from mount 'deg_table'\n- **Table**: flat DEG table (CSV/TSV/RDS) attached with mount name 'input'\n- **Filtered DEG**: MOSuite moo-properties asset (mount 'input') — after 'filter differential expression'\n- **All DEG** (default): MOSuite moo-properties asset (mount 'input') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
 	},
 	"datasets": [
 		{
 			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
 			"name": "Demo DEG Table",
-			"help_text": "Mouse RNA-seq demo data with 3 comparisons (B-A, C-A, B-C). Used automatically if no file is uploaded."
+			"help_text": "Demo Mouse RNA-seq data. Used when 'DEG Table File' is blank (mount: deg_table)."
 		}
 	],
 	"categories": [
@@ -50,13 +50,14 @@
 			"category": "basic",
 			"name": "DEG Table File",
 			"param_name": "deg_file",
-			"description": "Select the input format matching your MOSuite workflow step. Leave blank for a standard single flat DEG table. For MOSuite moo-properties assets, choose 'Filtered DEG' (after filter differential expression step) or 'All DEG' (after differential expression analysis step).",
-			"help_text": "Blank: single flat DEG table (CSV/TSV/RDS) auto-detected from the attached dataset.\n\nFiltered DEG: use when the moo-properties asset was written after the 'MOSuite - filter differential expression' capsule. Loads analyses/diff_filt.csv — a wide-format table containing only genes that passed significance/fold-change thresholds, with all comparisons combined (columns: GeneName, B-A_tstat, B-A_adjpval, B-A_FC, C-A_tstat, ...).\n\nAll DEG: use when the moo-properties asset was written after the 'MOSuite - differential expression analysis' capsule (unfiltered). Loads per-comparison analyses/diff/diff_{comparison}.csv files and merges them. Each file contains ALL genes with columns tstat, adjpval, FC — better for rank-based gene selection which does not require pre-filtering.",
+			"description": "Input mode and mount to use. blank = demo data from mount 'deg_table'. Table/Filtered DEG/All DEG = data from mount 'input'. Attach your dataset with mount name 'input' before selecting one of these modes.",
+			"help_text": "Blank: demo data auto-detected from /data/deg_table/ (mount name: deg_table).\n\nTable: your own flat DEG table (CSV/TSV/RDS) attached with mount name 'input'. The file is auto-detected from /data/input/.\n\nFiltered DEG: MOSuite moo-properties asset attached with mount name 'input'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset attached with mount name 'input'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
 			"type": "list",
 			"value_type": "string",
 			"default_value": "All DEG",
 			"extra_data": [
 				"",
+				"Table",
 				"Filtered DEG",
 				"All DEG"
 			]
