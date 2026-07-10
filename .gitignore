@@ -1,6 +1,5 @@
-# Exclude data, results, and scratch directories (best practice for reproducibility)
+# Exclude data and scratch directories
 /data/
-/results/
 /scratch/
 
 .vscode
