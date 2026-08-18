@@ -37,7 +37,7 @@ docker run --rm \
   --gene_names_column "GeneName" \
   --comparisons "B-A,C-A,B-C" \
   --t_statistic_columns "tstat" \
-  --significance_columns "adjpval" \
+  --significance_columns "pval" \
   --fold_change_columns "FC" \
   --species "Mouse" \
   "$@"

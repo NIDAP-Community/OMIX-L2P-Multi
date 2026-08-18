@@ -682,7 +682,7 @@ if (is.null(deg_table)) {
     }
     comparisons_vec <- trimws(unlist(strsplit(opt$comparisons, ",")))
     tstat_col <- first_or_default(opt$t_statistic_columns, "tstat")
-    sig_col   <- first_or_default(opt$significance_columns, "adjpval")
+    sig_col   <- first_or_default(opt$significance_columns, "pval")
     fc_col    <- first_or_default(opt$fold_change_columns,  "FC")
     cat(sprintf(
       "  Per-file column names: gene='%s'  tstat='%s'  sig='%s'  fc='%s'\n",

@@ -98,7 +98,7 @@ resolve_workflow_multi_columns <- function(df, comparisons) {
       comparisons,
       first_comparison_column,
       character(1),
-      suffixes = c("_adjpval", "_pval", "_padj", "_pvalue", "_p.value", "_FDR"),
+      suffixes = c("_pval", "_adjpval", "_padj", "_pvalue", "_p.value", "_FDR"),
       available_cols = colnames(df)
     ),
     fold_change_columns = vapply(

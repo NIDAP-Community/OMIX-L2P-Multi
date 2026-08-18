@@ -126,10 +126,10 @@
 			"category": "columns",
 			"name": "Significance Columns",
 			"param_name": "significance_columns",
-			"description": "Significance column name. MOSuite default 'adjpval' works automatically for both All DEG and Filtered DEG modes (auto-expanded to B-A_adjpval, C-A_adjpval, ... for wide tables). For a custom flat table with prefix-style columns, ensure Comparisons matches the prefix. For fully custom naming, enter one name per comparison in order, comma-separated (e.g. 'padj_B_vs_A, padj_C_vs_A').",
+			"description": "Nominal p-value column name. MOSuite default 'pval' works automatically for both All DEG and Filtered DEG modes (auto-expanded to B-A_pval, C-A_pval, ... for wide tables). For a custom flat table with prefix-style columns, ensure Comparisons matches the prefix. For fully custom naming, enter one name per comparison in order, comma-separated (e.g. 'pval_B_vs_A, pval_C_vs_A').",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "adjpval"
+			"default_value": "pval"
 		},
 		{
 			"id": "oL23Pa1gVX78Dln6",

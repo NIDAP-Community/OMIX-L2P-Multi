@@ -24,6 +24,7 @@ comparisons <- c("B-A", "C-A", "B-C")
 deg_table <- data.frame(GeneName = c("GeneA", "GeneB"), check.names = FALSE)
 for (comparison in comparisons) {
   deg_table[[paste0(comparison, "_tstat")]] <- c(1, -1)
+  deg_table[[paste0(comparison, "_pval")]] <- c(0.001, 0.002)
   deg_table[[paste0(comparison, "_adjpval")]] <- c(0.01, 0.02)
   deg_table[[paste0(comparison, "_FC")]] <- c(2, -2)
 }
@@ -36,7 +37,7 @@ columns <- resolve_workflow_multi_columns(deg_table, comparisons)
 stopifnot(
   identical(columns$gene_names_column, "GeneName"),
   identical(unname(columns$t_statistic_columns), paste0(comparisons, "_tstat")),
-  identical(unname(columns$significance_columns), paste0(comparisons, "_adjpval")),
+  identical(unname(columns$significance_columns), paste0(comparisons, "_pval")),
   identical(unname(columns$fold_change_columns), paste0(comparisons, "_FC"))
 )
 
