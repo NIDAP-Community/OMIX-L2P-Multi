@@ -1,5 +1,13 @@
 # OMIX L2P Analysis (Multi)
 
+## Related repositories
+
+This repository is the **Code Ocean deployment adapter** for L2P Multi. The
+platform-neutral source, CLI, tests, and interface schema are maintained in
+the canonical [OMIX L2P Multi module](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi).
+Read the [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md#code-ocean-deployment-adapters)
+before changing shared scientific behavior.
+
 ## Overview
 
 **Version**: v4.0 | **Part of the OMIX analysis suite**
