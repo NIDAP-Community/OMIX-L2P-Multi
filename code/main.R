@@ -503,6 +503,35 @@ first_or_default <- function(param_val, default_val) {
   trimws(unlist(strsplit(v, ",")))[1]
 }
 
+resolve_gene_names_column <- function(df, requested = NULL) {
+  requested <- if (is.null(requested)) "" else trimws(as.character(requested))
+  available_cols <- colnames(df)
+  if (nzchar(requested)) {
+    if (requested %in% available_cols) return(requested)
+    case_match <- available_cols[tolower(available_cols) == tolower(requested)]
+    if (length(case_match) == 1L) return(case_match[[1L]])
+    stop(sprintf(
+      "ERROR: Gene names column '%s' was not found. Available columns: %s",
+      requested, paste(available_cols, collapse = ", ")
+    ))
+  }
+
+  candidates <- c(
+    "GeneName", "Gene Symbols", "Gene", "gene", "GeneSymbol",
+    "gene_symbol", "Gene_Symbol", "symbol", "Symbol", "gene_name",
+    "Gene_Name", "gene_names", "Gene_Names", "gene_id", "GeneID", "Gene_ID"
+  )
+  detected <- candidates[candidates %in% available_cols]
+  if (length(detected) == 0L) {
+    stop(sprintf(
+      "ERROR: Could not auto-detect the gene-symbol column. Specify 'Gene Names Column'. Available columns: %s",
+      paste(available_cols, collapse = ", ")
+    ))
+  }
+  cat(sprintf("Auto-detected gene names column: %s\n", detected[[1L]]))
+  detected[[1L]]
+}
+
 # Find diff_filt.csv anywhere under base_dir ("Filtered DEG" mode)
 find_filtered_deg_file <- function(base_dir) {
   all_csv   <- list.files(base_dir, pattern = "\\.csv$", full.names = TRUE,
@@ -684,6 +713,17 @@ if (is.null(deg_table)) {
     tstat_col <- first_or_default(opt$t_statistic_columns, "tstat")
     sig_col   <- first_or_default(opt$significance_columns, "pval")
     fc_col    <- first_or_default(opt$fold_change_columns,  "FC")
+    if (is.null(opt$gene_names_column) || !nzchar(trimws(opt$gene_names_column))) {
+      all_csv <- list.files("/data", pattern = "\\.csv$", full.names = TRUE,
+                            recursive = TRUE, ignore.case = TRUE)
+      first_target <- tolower(paste0("diff_", comparisons_vec[[1L]], ".csv"))
+      first_match <- all_csv[tolower(basename(all_csv)) == first_target]
+      if (length(first_match) > 0L) {
+        opt$gene_names_column <- resolve_gene_names_column(
+          read.csv(first_match[[1L]], stringsAsFactors = FALSE, check.names = FALSE)
+        )
+      }
+    }
     cat(sprintf(
       "  Per-file column names: gene='%s'  tstat='%s'  sig='%s'  fc='%s'\n",
       opt$gene_names_column, tstat_col, sig_col, fc_col
@@ -878,6 +918,7 @@ cat("=======================\n\n")
 
 # Validate gene names column exists
 available_cols <- colnames(deg_table)
+opt$gene_names_column <- resolve_gene_names_column(deg_table, opt$gene_names_column)
 if (!opt$gene_names_column %in% available_cols) {
   cat("\n=== ERROR: Gene names column not found ===\n")
   cat(sprintf("You specified: '%s'\n", opt$gene_names_column))

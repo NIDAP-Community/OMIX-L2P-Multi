@@ -41,6 +41,13 @@ stopifnot(
   identical(unname(columns$fold_change_columns), paste0(comparisons, "_FC"))
 )
 
+gene_symbols_table <- deg_table
+names(gene_symbols_table)[names(gene_symbols_table) == "GeneName"] <- "Gene Symbols"
+stopifnot(identical(
+  resolve_workflow_multi_columns(gene_symbols_table, comparisons)$gene_names_column,
+  "Gene Symbols"
+))
+
 second_deg <- file.path(workflow_dir, "additional_DEG.csv")
 write.csv(data.frame(x = 1), second_deg, row.names = FALSE)
 expect_error(find_workflow_csv(fixture), "Multiple workflow DEG CSV files")

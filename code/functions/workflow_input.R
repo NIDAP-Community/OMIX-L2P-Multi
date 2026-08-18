@@ -84,7 +84,7 @@ parse_workflow_comparisons <- function(comparisons) {
 resolve_workflow_multi_columns <- function(df, comparisons) {
   columns <- list(
     gene_names_column = first_existing_column(
-      c("GeneName", "Gene", "gene_name", "gene_symbol", "GeneSymbol"),
+      c("GeneName", "Gene Symbols", "Gene", "gene_name", "gene_symbol", "GeneSymbol"),
       colnames(df)
     ),
     t_statistic_columns = vapply(
