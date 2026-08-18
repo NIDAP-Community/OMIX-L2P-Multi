@@ -108,7 +108,7 @@ option_list <- list(
   make_option(
     "--species",
     type = "character",
-    default = "Human",
+    default = "Mouse",
     help = "Species [default %default]"
   ),
   make_option(
@@ -396,11 +396,6 @@ while (i <= length(args)) {
 opt <- parse_args(opt_parser, args = filtered_args)
 log_time("Parsed command-line arguments")
 
-# Validate required parameters
-if (is.null(opt$gene_names_column)) {
-  stop("ERROR: 'gene_names_column' parameter is required")
-}
-
 # Load input data: uploaded file > data asset (priority-based loading)
 log_time("Starting data loading")
 
@@ -606,6 +601,46 @@ merge_comparison_files <- function(base_dir, comparisons_vec, gene_col,
 
   cat(sprintf("  Merged table: %d row(s) x %d column(s)\n", nrow(merged), ncol(merged)))
   merged
+}
+
+source("functions/workflow_input.R")
+
+# Priority 2: use the durable wide DEG CSV from an upstream Code Ocean
+# workflow. This takes precedence over legacy attached-data modes such as
+# "All DEG", whose value is an App Panel mode rather than a file path.
+if (is.null(deg_table)) {
+  workflow_csv_path <- find_workflow_csv()
+  workflow_moo_rds_path <- if (is.null(workflow_csv_path)) find_workflow_moo_rds() else NULL
+
+  if (!is.null(workflow_csv_path) || !is.null(workflow_moo_rds_path)) {
+    input_file_path <- if (!is.null(workflow_csv_path)) workflow_csv_path else workflow_moo_rds_path
+    deg_table <- if (!is.null(workflow_csv_path)) {
+      load_flat_file(input_file_path)
+    } else {
+      load_workflow_moo_rds(input_file_path)
+    }
+
+    workflow_comparisons <- parse_workflow_comparisons(opt$comparisons)
+    workflow_columns <- resolve_workflow_multi_columns(deg_table, workflow_comparisons)
+    opt$gene_names_column <- workflow_columns$gene_names_column
+    opt$t_statistic_columns <- paste(workflow_columns$t_statistic_columns, collapse = ",")
+    opt$significance_columns <- paste(workflow_columns$significance_columns, collapse = ",")
+    opt$fold_change_columns <- paste(workflow_columns$fold_change_columns, collapse = ",")
+
+    cat(sprintf(
+      paste0(
+        "Loading workflow DEG table: %s\n",
+        "  Gene=%s\n  t-stat=%s\n  p-value=%s\n  FC=%s\n"
+      ),
+      input_file_path,
+      opt$gene_names_column,
+      opt$t_statistic_columns,
+      opt$significance_columns,
+      opt$fold_change_columns
+    ))
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time(if (!is.null(workflow_csv_path)) "Loaded workflow DEG CSV" else "Loaded workflow moo-diff.rds")
+  }
 }
 
 if (is.null(deg_table)) {

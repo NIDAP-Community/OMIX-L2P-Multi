@@ -1,5 +1,6 @@
 # Exclude data and scratch directories
 /data/
+/results/
 /scratch/
 
 .vscode

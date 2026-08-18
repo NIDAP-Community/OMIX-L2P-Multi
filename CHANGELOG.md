@@ -8,6 +8,8 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 ## [Unreleased]
 
 ### Added
+- Local workflow-input tests and a reproducible Code Ocean-shaped debug
+  runner for the preferred wide DEG CSV and the `moo-diff.rds` fallback.
 - Metadata tag improvements for better discoverability (2026-01-08)
   - Added "MSigDB" tag (tool supports MSigDB H and C collections)
   - Added "gene-sets" tag
@@ -27,6 +29,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
+- Downstream workflow input now takes priority over the legacy `All DEG` and
+  `Filtered DEG` data-asset modes. It selects one CSV whose filename matches
+  the case-insensitive regex `DEG` and infers every requested comparison's
+  t-statistic, significance, and fold-change columns.
+- Aligned the runtime species default with the Code Ocean App Panel (`Mouse`).
 - Replaced `--input_file` parameter with `--deg_file` for consistency
 - Data loading logic now supports three input methods:
   1. Direct file upload via App Panel (highest priority)
@@ -44,6 +51,10 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Removed hard-coded input file path requirement
 
 ### Fixed
+- Non-interactive runs no longer create an implicit `Rplots.pdf` in the code
+  directory; plots are written only to the explicit results path.
+- Reduced ortholog-mapping logs to a short preview rather than every mapped
+  gene.
 - App Panel now uses named parameters mode (2026-01-08)
   - Passes arguments as `--param value` instead of positional arguments
   - Prevents optparse errors when file uploads are left blank
