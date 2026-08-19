@@ -54,9 +54,8 @@
 			"help_text": "Blank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
 			"type": "list",
 			"value_type": "string",
-			"default_value": "All DEG",
+			"default_value": "Table",
 			"extra_data": [
-				"",
 				"Table",
 				"Filtered DEG",
 				"All DEG"
@@ -69,8 +68,7 @@
 			"param_name": "gene_names_column",
 			"description": "Optional gene-symbol column. Leave blank to auto-detect GeneName (the demo and OMIX workflow default), then Gene Symbols and other common identifiers. Enter an exact column name to override.",
 			"type": "text",
-			"value_type": "string",
-			"default_value": ""
+			"value_type": "string"
 		},
 		{
 			"id": "eUXk7u4FwvJfsI63",
@@ -147,9 +145,10 @@
 			"name": "Select By Rank",
 			"param_name": "select_by_rank",
 			"description": "Select genes by rank (recommended) or by significance/fold change thresholds",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "TRUE"
+			"default_value": "True",
+			"extra_data": []
 		},
 		{
 			"id": "OR7spe1g9Kl5oRR2",
@@ -157,9 +156,10 @@
 			"name": "Select Top Percentage",
 			"param_name": "select_top_percentage",
 			"description": "Select top percentage of genes (vs fixed number)",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "TRUE"
+			"default_value": "True",
+			"extra_data": []
 		},
 		{
 			"id": "QITcMp3bOV4kjkzA",
@@ -279,9 +279,10 @@
 			"name": "Use Built-in Gene Universe",
 			"param_name": "use_built_in_gene_universe",
 			"description": "Use built-in gene universe instead of detected genes",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "FALSE"
+			"default_value": "False",
+			"extra_data": []
 		},
 		{
 			"id": "4BkHmpc9NVkXeY5x",
@@ -289,9 +290,10 @@
 			"name": "Use FDR P-values",
 			"param_name": "use_fdr_for_significance",
 			"description": "Use FDR-adjusted p-values for pathway significance",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "FALSE"
+			"default_value": "False",
+			"extra_data": []
 		},
 		{
 			"id": "TGpL4APLgZOdIanR",
@@ -299,9 +301,10 @@
 			"name": "Update Gene Symbols",
 			"param_name": "update_genes",
 			"description": "Update gene symbols to current nomenclature",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "TRUE"
+			"default_value": "True",
+			"extra_data": []
 		},
 		{
 			"id": "XZcuON2LQDwX8LFI",
@@ -401,9 +404,10 @@
 			"name": "Dynamic Pathway Font Size",
 			"param_name": "use_dynamic_pathway_font_size",
 			"description": "Automatically adjust pathway label font size based on number of pathways",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "TRUE"
+			"default_value": "True",
+			"extra_data": []
 		},
 		{
 			"id": "i1jyF1pMHsz45FwM",
@@ -516,9 +520,10 @@
 			"name": "Use Panel Plot",
 			"param_name": "use_panel_plot",
 			"description": "Use panel layout (splits comparisons into separate panels)",
-			"type": "text",
+			"type": "list",
 			"value_type": "boolean",
-			"default_value": "FALSE"
+			"default_value": "False",
+			"extra_data": []
 		},
 		{
 			"id": "nADyZeuRxCUTf1YG",
