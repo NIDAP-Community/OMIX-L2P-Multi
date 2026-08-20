@@ -116,30 +116,30 @@
 			"category": "columns",
 			"name": "T-Statistic Columns",
 			"param_name": "t_statistic_columns",
-			"description": "T-statistic column name. MOSuite default 'tstat' works automatically for both All DEG and Filtered DEG modes (auto-expanded to B-A_tstat, C-A_tstat, ... for wide tables). For a custom flat table with prefix-style columns (e.g. B-A_tstat), just ensure Comparisons matches the prefix. For fully custom naming, enter one name per comparison in order, comma-separated (e.g. 'tstat_B_vs_A, tstat_C_vs_A').",
+			"description": "Optional t-statistic-column override. Leave blank to auto-detect MOSuite 'tstat' or comparison-prefixed columns such as 'B-A_tstat'. For fully custom naming, enter one column per comparison in order, comma-separated.",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "tstat"
+			"default_value": ""
 		},
 		{
 			"id": "uPPkk2mh7dEjx1hA",
 			"category": "columns",
 			"name": "Significance Columns",
 			"param_name": "significance_columns",
-			"description": "Nominal p-value column name. MOSuite default 'pval' works automatically for both All DEG and Filtered DEG modes (auto-expanded to B-A_pval, C-A_pval, ... for wide tables). For a custom flat table with prefix-style columns, ensure Comparisons matches the prefix. For fully custom naming, enter one name per comparison in order, comma-separated (e.g. 'pval_B_vs_A, pval_C_vs_A').",
+			"description": "Optional significance-column override. Leave blank to auto-detect nominal p-value columns first (for example, 'pval' or 'B-A_pval'); adjusted p-values are only used when explicitly selected or when no nominal p-value is available. For fully custom naming, enter one column per comparison in order, comma-separated.",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "pval"
+			"default_value": ""
 		},
 		{
 			"id": "oL23Pa1gVX78Dln6",
 			"category": "columns",
 			"name": "Fold Change Columns",
 			"param_name": "fold_change_columns",
-			"description": "Fold change column name. MOSuite default 'FC' works automatically for both All DEG and Filtered DEG modes (auto-expanded to B-A_FC, C-A_FC, ... for wide tables). For a custom flat table with prefix-style columns, ensure Comparisons matches the prefix. For fully custom naming, enter one name per comparison in order, comma-separated (e.g. 'logFC_B_vs_A, logFC_C_vs_A').",
+			"description": "Optional fold-change-column override. Leave blank to auto-detect MOSuite 'FC' or comparison-prefixed columns such as 'B-A_FC'. For fully custom naming, enter one column per comparison in order, comma-separated.",
 			"type": "text",
 			"value_type": "string",
-			"default_value": "FC"
+			"default_value": ""
 		},
 		{
 			"id": "fgY5hinPeTayVrU0",
