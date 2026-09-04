@@ -1,12 +1,23 @@
 # OMIX L2P Analysis (Multi)
 
-## Related repositories
+## Canonical OMIX module
 
-This repository is the **Code Ocean deployment adapter** for L2P Multi. The
-platform-neutral source, CLI, tests, and interface schema are maintained in
-the canonical [OMIX L2P Multi module](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi).
-Read the [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md#code-ocean-deployment-adapters)
-before changing shared scientific behavior.
+| Item | Location |
+| --- | --- |
+| Canonical module | [OMIX L2P Multi](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi) |
+| Interface contract | [schemas/interface.yml](https://github.com/NIDAP-Community/OMIX/blob/main/modules/OMIX-L2P-Multi/schemas/interface.yml) |
+| Development contract | [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md) |
+| Released source reference | [OMIX_MODULE_SOURCE.md](OMIX_MODULE_SOURCE.md) |
+
+The canonical module owns scientific behavior, portable CLI operation, tests,
+and the reusable input/output contract. This repository is its Code Ocean
+deployment adapter.
+
+## What this deployment adds
+
+- The Code Ocean App Panel and capsule entry point.
+- Uploaded and attached multi-comparison DEG-table discovery under `/data`.
+- Capsule outputs under `/results` and the pinned runtime configuration.
 
 ## Overview
 
@@ -276,6 +287,12 @@ Divide plot into panels by pathway collection (not recommended for many collecti
 For questions or issues:
 - **NIDAP Team**: NCICCBRNIDAP@mail.nih.gov
 - **CCBR**: CCR Collaborative Bioinformatics Resource
+
+## For developers
+
+Read [AGENTS.md](AGENTS.md) and [OMIX_MODULE_SOURCE.md](OMIX_MODULE_SOURCE.md)
+before editing. Reusable scientific changes belong in the canonical OMIX module
+and are exported here only after validation.
 
 ---
 
