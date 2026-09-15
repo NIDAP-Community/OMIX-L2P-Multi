@@ -3,45 +3,45 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank): auto-detects a single flat file or RDS from mount 'deg_table'\n- Table: same as blank — auto-detects a flat file from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset (mount 'deg_table') — after 'filter differential expression'\n- All DEG (default): MOSuite moo-properties asset (mount 'deg_table') — after 'differential expression analysis'\n\nSet 'Comparisons' to the comparison IDs in your data. Configure Basic Settings and run."
+		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank) or Table: auto-detects one flat table or RDS from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset after 'filter differential expression'\n- All DEG: MOSuite moo-properties asset after 'differential expression analysis'\n\nSet Comparisons to the ordered comparison IDs in your data. Threshold selection (nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2) is the default. Shared OMIX pathway bubble plots show the top 20 pathways while the CSV retains every pathway that meets the selected significance and hit-count criteria."
 	},
 	"datasets": [
 		{
 			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
 			"name": "Demo DEG Table",
-			"help_text": "Demo Mouse RNA-seq data (mount: deg_table). Replaced automatically when you attach your own dataset with the same mount name."
+			"description": "Demo Mouse RNA-seq data (mount: deg_table). Replaced automatically when you attach your own dataset with the same mount name."
 		}
 	],
 	"categories": [
 		{
 			"id": "basic",
 			"name": "⭐ Basic Settings",
-			"help_text": "Essential parameters to get started"
+			"description": "Essential parameters to get started"
 		},
 		{
 			"id": "columns",
 			"name": "Column Overrides",
-			"help_text": "Override auto-detected column names if needed"
+			"description": "Override auto-detected column names if needed"
 		},
 		{
 			"id": "gene_selection",
 			"name": "Gene Selection",
-			"help_text": "Fine-tune gene selection criteria"
+			"description": "Fine-tune gene selection criteria"
 		},
 		{
 			"id": "pathways",
 			"name": "Pathway Settings",
-			"help_text": "Customize pathway filtering and selection"
+			"description": "Customize pathway filtering and selection"
 		},
 		{
 			"id": "custom_pathways",
 			"name": "Custom Pathways (Optional)",
-			"help_text": "Use your own pathway database instead of or in addition to built-in collections"
+			"description": "Use your own pathway database instead of or in addition to built-in collections"
 		},
 		{
 			"id": "visualization",
 			"name": "Visualization",
-			"help_text": "Customize plot appearance and output"
+			"description": "Customize plot appearance and output"
 		}
 	],
 	"parameters": [
@@ -50,8 +50,7 @@
 			"category": "basic",
 			"name": "DEG Table File",
 			"param_name": "deg_file",
-			"description": "Select the differential analysis input type. Table - uses a single flat table with differential analysis information. Filtered DEG - uses data from \"Filter Differential Analysis\". All DEG - uses data from \"Differential Expression Analysis\".",
-			"help_text": "Blank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
+			"description": "Select the differential analysis input type. Table - uses a single flat table with differential analysis information. Filtered DEG - uses data from \"Filter Differential Analysis\". All DEG - uses data from \"Differential Expression Analysis\".\n\nBlank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
 			"type": "list",
 			"value_type": "string",
 			"default_value": "Table",
@@ -144,10 +143,10 @@
 			"category": "gene_selection",
 			"name": "Select By Rank",
 			"param_name": "select_by_rank",
-			"description": "Select genes by rank (recommended) or by significance/fold change thresholds",
+			"description": "Use the legacy t-statistic rank method. Leave FALSE (default) to select genes by nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2.",
 			"type": "list",
 			"value_type": "boolean",
-			"default_value": "True",
+			"default_value": "False",
 			"extra_data": []
 		},
 		{
@@ -211,7 +210,7 @@
 			"category": "pathways",
 			"name": "Top Pathways to Compare",
 			"param_name": "top_pathways",
-			"description": "Number of top pathways to include in comparison across groups",
+			"description": "Deprecated compatibility setting. It no longer limits the exported pathway table; use Maximum Pathways to Plot to cap only the displayed rows.",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "10",
@@ -236,8 +235,58 @@
 			"description": "Maximum number of pathways to display in the bubble plot",
 			"type": "text",
 			"value_type": "number",
-			"default_value": "15",
+			"default_value": "20",
 			"minimum": 1
+		},
+		{
+			"id": "Vx4r8QWz0pMeTLsJ",
+			"category": "visualization",
+			"name": "Write Shared Bubble Plots",
+			"param_name": "pathway_bubble_plots",
+			"description": "Write standardized OMIX pathway-bubble figures and a manifest. The deprecated capsule-local summary image is no longer written.",
+			"type": "list",
+			"value_type": "boolean",
+			"default_value": "True",
+			"extra_data": []
+		},
+		{
+			"id": "WEnq3D0X7pKlmB9f",
+			"category": "visualization",
+			"name": "Shared Bubble Plot Top Pathways",
+			"param_name": "pathway_bubble_top_n",
+			"description": "Maximum pathway rows shown in each standardized bubble plot. 0 shows all eligible pathways; exports always retain all eligible pathways.",
+			"type": "text",
+			"value_type": "number",
+			"default_value": "20",
+			"minimum": 0
+		},
+		{
+			"id": "R8uP1Hn6ZkQqYxB2",
+			"category": "visualization",
+			"name": "Bubble Plot Significance Statistic",
+			"param_name": "pathway_bubble_significance_statistic",
+			"description": "Statistic used for standardized-bubble selection and significance shapes. Adjusted p-value/FDR is the default so pathway tools use the same criterion.",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "padj",
+			"extra_data": [
+				"padj",
+				"pval"
+			]
+		},
+		{
+			"id": "Ui3NsKz6Fq1rXdW4",
+			"category": "visualization",
+			"name": "Collection Color Scale",
+			"param_name": "collection_color_scale",
+			"description": "Use independent color limits per collection (default) so smaller collections remain legible, or one shared scale for direct color comparison.",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "independent",
+			"extra_data": [
+				"independent",
+				"shared"
+			]
 		},
 		{
 			"id": "gYXJBzZhFmwgeHSS",

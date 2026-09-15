@@ -126,7 +126,7 @@ option_list <- list(
   make_option(
     "--select_by_rank",
     type = "logical",
-    default = TRUE,
+    default = FALSE,
     help = "Select genes by rank [default %default]"
   ),
   make_option(
@@ -176,8 +176,32 @@ option_list <- list(
   make_option(
     "--maximum_pathways_to_plot",
     type = "integer",
-    default = 15,
+    default = 20,
     help = "Maximum pathways to display in plot [default %default]"
+  ),
+  make_option(
+    "--pathway_bubble_plots",
+    type = "logical",
+    default = TRUE,
+    help = "Write shared OMIX pathway bubble plots [default %default]"
+  ),
+  make_option(
+    "--pathway_bubble_top_n",
+    type = "integer",
+    default = 20,
+    help = "Top pathways in each shared bubble-plot selection; 0 means all [default %default]"
+  ),
+  make_option(
+    "--pathway_bubble_significance_statistic",
+    type = "character",
+    default = "padj",
+    help = "padj (FDR) or pval used for shared bubble-plot selection [default %default]"
+  ),
+  make_option(
+    "--collection_color_scale",
+    type = "character",
+    default = "independent",
+    help = "independent or shared collection-specific bubble-plot colour scales [default %default]"
   ),
   make_option(
     "--plot_bubble_size",
@@ -395,6 +419,52 @@ while (i <= length(args)) {
 
 opt <- parse_args(opt_parser, args = filtered_args)
 log_time("Parsed command-line arguments")
+
+if (!opt$collection_color_scale %in% c("independent", "shared")) {
+  stop("ERROR: Collection Color Scale must be 'independent' or 'shared'.")
+}
+if (!opt$pathway_bubble_significance_statistic %in% c("padj", "pval")) {
+  stop("ERROR: Bubble Plot Significance Statistic must be 'padj' or 'pval'.")
+}
+if (is.na(opt$pathway_bubble_top_n) || opt$pathway_bubble_top_n < 0L) {
+  stop("ERROR: Shared Bubble Plot Top Pathways must be zero or a positive integer.")
+}
+
+write_pathway_bubble_outputs <- function(
+    results,
+    output_dir,
+    top_n_pathways,
+    collection_color_scale,
+    significance_statistic,
+    p_value_cutoff,
+    comparisons) {
+  if (!requireNamespace("OmixPathwayPlots", quietly = TRUE)) {
+    stop(
+      "ERROR: OmixPathwayPlots is required for shared pathway-bubble plots. ",
+      "Use the current OMIX r-pathway runtime or disable shared bubble plots."
+    )
+  }
+  plots <- OmixPathwayPlots::plot_pathway_bubble_set(
+    results,
+    input_format = "l2p",
+    p_value_column = significance_statistic,
+    p_value_cutoff = p_value_cutoff,
+    top_n_pathways = top_n_pathways,
+    selection_scopes = c(
+      "combined_single_panel",
+      "across_all_collections",
+      "within_each_collection"
+    ),
+    selection_contrasts = comparisons,
+    plot_contrasts = comparisons,
+    collection_color_scale = collection_color_scale
+  )
+  OmixPathwayPlots::save_pathway_bubble_set(
+    plots,
+    output_dir = output_dir,
+    file_prefix = "L2P-Multi-Pathway-Bubble"
+  )
+}
 
 # Load input data: uploaded file > data asset (priority-based loading)
 log_time("Starting data loading")
@@ -1271,17 +1341,33 @@ results <- l2p_multi(
   x_axis_tick_font_size = opt$x_axis_tick_font_size,
   x_axis_tick_labels = x_axis_tick_labels_vec,
   y_axis_tick_labels = y_axis_tick_labels_vec,
-  export_plot_file = opt$output_plot,
+  export_plot_file = NULL,
   export_plot_width = opt$plot_width,
   export_plot_height = opt$plot_height,
   column_spacing = opt$column_spacing,
   export_results_file = opt$output_results
 )
+
+if (isTRUE(opt$pathway_bubble_plots)) {
+  bubble_outputs <- write_pathway_bubble_outputs(
+    results = results,
+    output_dir = dirname(opt$output_results),
+    top_n_pathways = opt$pathway_bubble_top_n,
+    collection_color_scale = opt$collection_color_scale,
+    significance_statistic = opt$pathway_bubble_significance_statistic,
+    p_value_cutoff = opt$p_value_limit,
+    comparisons = comparisons_vec
+  )
+  cat(sprintf("Shared pathway-bubble manifest: %s\n", bubble_outputs$manifest))
+}
+
 log_time("L2P Multi analysis completed")
 
 cat("\n=== L2P Multi Analysis completed successfully! ===\n")
 cat(sprintf("Results saved to: %s\n", opt$output_results))
-cat(sprintf("Plot saved to: %s\n", opt$output_plot))
+if (isTRUE(opt$pathway_bubble_plots)) {
+  cat(sprintf("Shared pathway-bubble plots saved under: %s\n", dirname(opt$output_results)))
+}
 cat("\n")
 
 # Print timing summary

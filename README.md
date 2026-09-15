@@ -32,7 +32,7 @@ This analysis performs pathway enrichment using Fisher's exact test to identify 
 ### Key Features
 
 - **Multi-comparison support**: Compare pathway enrichment across multiple DEG contrasts
-- **Flexible gene selection**: Select genes by rank (t-statistic) or by thresholds (p-value & fold change)
+- **Threshold-based selection by default**: Select genes by nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2; rank selection remains available
 - **Multiple pathway databases**: GO, REACTOME, KEGG, MSigDB (H, C1-C8), WikiPathways, and custom pathways
 - **Cross-species support**: Human, Mouse, Rat, Macaque, Zebrafish, Rabbit, Drosophila (via ortholog mapping)
 - **Gene symbol updates**: Optional automatic gene name updating for consistency
@@ -73,13 +73,13 @@ This analysis performs pathway enrichment using Fisher's exact test to identify 
   --comparisons "TreatmentB-Control,TreatmentC-Control" \
   --species "Human" \
   --collections "H,REACTOME" \
-  --select_by_rank TRUE \
-  --top_pathways 15
+  --select_by_rank FALSE \
+  --maximum_pathways_to_plot 20
 ```
 
 ### Gene Selection Methods
 
-**Method 1: Rank-based (default)**
+**Method 1: Rank-based (optional)**
 ```bash
 --select_by_rank TRUE \
 --select_top_percentage TRUE    # Top 10% of genes by |t-statistic|
@@ -89,7 +89,7 @@ This analysis performs pathway enrichment using Fisher's exact test to identify 
 --select_top_genes 500          # Top 500 genes by |t-statistic|
 ```
 
-**Method 2: Threshold-based**
+**Method 2: Threshold-based (default)**
 ```bash
 --select_by_rank FALSE \
 --significance_threshold 0.05 \
@@ -150,7 +150,7 @@ My_Custom_Pathway_2,KRAS
 ```bash
 --plot_bubble_size "pval"                    # or "fdr", "number_hits"
 --plot_bubble_color "enrichment_score"       # or "net_enrichment_score"
---top_pathways 10                            # Number of top pathways to display
+--maximum_pathways_to_plot 20                # Number of rows shown in each legacy summary plot
 --number_of_significant_events 1             # Min significant events across contrasts
 --pathway_axis_label_max_length 100          # Max pathway label length
 --pathway_axis_label_font_size 5             # Pathway label font size
@@ -165,11 +165,10 @@ My_Custom_Pathway_2,KRAS
 | `comparisons` | string | required | Comma-separated comparison IDs |
 | `species` | string | "Mouse" | Species for ortholog mapping |
 | `collections` | string | "H" | Comma-separated pathway collections |
-| `select_by_rank` | boolean | TRUE | Use rank-based gene selection |
-| `top_pathways` | integer | 10 | Top pathways to compare across groups |
+| `select_by_rank` | boolean | FALSE | Use the optional rank-based gene selection |
+| `maximum_pathways_to_plot` | integer | 20 | Limit rows displayed in the legacy summary plot |
 | `significance_threshold` | numeric | 0.05 | P-value threshold (if not rank-based) |
 | `fold_change_threshold` | numeric | 1.2 | FC threshold (if not rank-based) |
-| `output_plot` | string | /results/l2p_multi_plot.png | Output plot path |
 | `output_results` | string | /results/l2p_multi_results.csv | Output results path |
 
 ## Complete Parameter Reference
@@ -187,7 +186,7 @@ My_Custom_Pathway_2,KRAS
 - **`fold_change_columns`**: Override auto-detected fold change columns (comma-separated)
 
 ### Gene Selection Method
-- **`select_by_rank`**: Use rank-based selection (TRUE) or thresholds (FALSE) (default: TRUE)
+- **`select_by_rank`**: Use rank-based selection (TRUE) or thresholds (FALSE) (default: FALSE)
 - **`select_top_percentage`**: Select top 10% (TRUE) or fixed number (FALSE) (default: TRUE)
 - **`select_top_genes`**: Number of top genes if not using percentage (default: 500)
 - **`significance_threshold`**: P-value threshold for threshold-based selection (default: 0.05)
@@ -195,12 +194,16 @@ My_Custom_Pathway_2,KRAS
 - **`minimum_number_of_deg_genes`**: Minimum DEG genes required per comparison (default: 100)
 
 ### Pathway Filtering
-- **`top_pathways`**: Number of top pathways to compare across groups (default: 10)
+- **`top_pathways`**: Deprecated compatibility setting; it does not truncate the exported pathway table
 - **`number_of_significant_events`**: Minimum comparisons where pathway must be significant (default: 1)
-- **`maximum_pathways_to_plot`**: Maximum pathways displayed in bubble plot (default: 15)
+- **`maximum_pathways_to_plot`**: Maximum pathways displayed in the legacy summary plot (default: 20)
 - **`update_genes`**: Update gene symbols to current nomenclature (default: TRUE)
 
 ### Visualization Options
+- **`pathway_bubble_plots`**: Write standardized OMIX bubble plots and a manifest (default: TRUE)
+- **`pathway_bubble_top_n`**: Maximum rows shown in each standardized bubble plot (default: 20; 0 = all)
+- **`pathway_bubble_significance_statistic`**: Use `padj` (default) or `pval` for standardized-bubble selection and shapes
+- **`collection_color_scale`**: Use independent (default) or shared color limits across pathway collections
 - **`plot_bubble_size`**: Bubble size metric - pval, fdr, or number_hits (default: "pval")
 - **`plot_bubble_color`**: Bubble color metric - enrichment_score, net_enrichment_score, or percent_gene_hits_per_pathway (default: "enrichment_score")
 - **`pathway_axis_label_max_length`**: Max characters for pathway labels (default: 45)
@@ -245,11 +248,10 @@ My_Custom_Pathway_2,KRAS
 
 ## Output Files
 
-1. **Bubble Plot** (`l2p_multi_plot.png`)
-   - Bubble size: Significance (-log10 p-value or FDR)
-   - Bubble color: Enrichment score or net enrichment score
-   - Y-axis: Pathway names
-   - X-axis: Comparison groups
+1. **Shared OMIX bubble plots** (`L2P-Multi-Pathway-Bubble-*.png`)
+   - One combined plot, a cross-collection faceted plot, collection-specific plots, and a manifest
+   - Bubble selection and significance shapes use adjusted p-values/FDR by default
+   - Each figure shows the top 20 pathways by default, while `l2p_multi_results.csv` retains every pathway that meets the selected significance and hit-count criteria
 
 2. **Results Table** (`l2p_multi_results.csv`)
    - Pathway name, category, direction
