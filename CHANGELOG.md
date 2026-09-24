@@ -8,6 +8,8 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 ## [Unreleased]
 
 ### Added
+- Static App Panel contract checks covering complete CLI exposure, canonical
+  parameter names, compatibility aliases, category organization, and defaults.
 - Local workflow-input tests and a reproducible Code Ocean-shaped debug
   runner for the preferred wide DEG CSV and the `moo-diff.rds` fallback.
 - Metadata tag improvements for better discoverability (2026-01-08)
@@ -29,6 +31,15 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
+- Reorganized the App Panel into Main and clearly labeled Advanced categories
+  without hiding any supported adapter CLI control.
+- The panel now emits canonical `collections_to_include` and
+  `select_top_percentage_of_genes` parameters. The previously released
+  `collections` and `select_top_percentage` command-line spellings remain
+  accepted as aliases for older saved runs.
+- Realigned the pathway-label font-size preset with the canonical L2P Multi
+  default of 5; the mouse species and ordered demo comparisons remain
+  intentional deployment presets.
 - Downstream workflow input now takes priority over the legacy `All DEG` and
   `Filtered DEG` data-asset modes. It selects one CSV whose filename matches
   the case-insensitive regex `DEG` and infers every requested comparison's

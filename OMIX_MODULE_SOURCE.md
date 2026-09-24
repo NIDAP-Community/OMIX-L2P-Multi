@@ -33,8 +33,24 @@ See the [OMIX versioning and release policy](https://github.com/NIDAP-Community/
 
 ## Adapter-only support code
 
-`code/functions/workflow_input.R` resolves platform workflow inputs. It is
-adapter support code, not an exported scientific function.
+`code/functions/workflow_input.R` resolves platform workflow inputs, and
+`code/functions/cli_compatibility.R` preserves released parameter aliases.
+They are adapter support code, not exported scientific functions.
+
+## Intentional adapter presets and compatibility aliases
+
+- The App Panel defaults `species` to `Mouse` and supplies ordered example
+  comparisons because the attached demonstration DEG dataset is mouse. The
+  portable canonical module retains its platform-neutral `Human` default and
+  requires callers to supply comparisons.
+- `deg_file`, `output_plot`, and `output_results` are Code Ocean translation
+  fields. `output_plot` is retained only for older saved runs; the current
+  shared figures are written beside `output_results`.
+- The adapter accepts the released aliases `--collections` and
+  `--select_top_percentage`, but its App Panel now uses the canonical names
+  `collections_to_include` and `select_top_percentage_of_genes`.
+- All other scientific and visualization defaults exposed by the panel match
+  the adapter CLI and the recorded canonical module.
 
 ## Ownership and synchronization
 

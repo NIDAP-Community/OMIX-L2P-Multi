@@ -3,7 +3,7 @@
 	"named_parameters": true,
 	"general": {
 		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank) or Table: auto-detects one flat table or RDS from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset after 'filter differential expression'\n- All DEG: MOSuite moo-properties asset after 'differential expression analysis'\n\nSet Comparisons to the ordered comparison IDs in your data. Threshold selection (nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2) is the default. Shared OMIX pathway bubble plots show the top 20 pathways while the CSV retains every pathway that meets the selected significance and hit-count criteria."
+		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank) or Table: auto-detects one flat table or RDS from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset after 'filter differential expression'\n- All DEG: MOSuite moo-properties asset after 'differential expression analysis'\n\nSet Comparisons to the ordered comparison IDs in your data. Threshold selection (nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2) is the default. Shared OMIX pathway bubble plots show the top 20 pathways while the CSV retains every pathway that meets the selected significance and hit-count criteria. Essential controls are under Main Settings; expand the Advanced categories to tune column detection, selection, filtering, custom pathways, or plot appearance."
 	},
 	"datasets": [
 		{
@@ -15,33 +15,38 @@
 	"categories": [
 		{
 			"id": "basic",
-			"name": "⭐ Basic Settings",
-			"description": "Essential parameters to get started"
+			"name": "Main Settings",
+			"description": "Input mode and the essential parameters for a standard run"
 		},
 		{
 			"id": "columns",
-			"name": "Column Overrides",
-			"description": "Override auto-detected column names if needed"
+			"name": "Advanced: Column Overrides",
+			"description": "Override auto-detected columns only when the input uses nonstandard names"
 		},
 		{
 			"id": "gene_selection",
-			"name": "Gene Selection",
-			"description": "Fine-tune gene selection criteria"
+			"name": "Advanced: Gene Selection",
+			"description": "Tune rank- or threshold-based gene selection"
 		},
 		{
 			"id": "pathways",
-			"name": "Pathway Settings",
-			"description": "Customize pathway filtering and selection"
+			"name": "Advanced: Pathway Filtering",
+			"description": "Tune pathway hit and significance filtering"
 		},
 		{
 			"id": "custom_pathways",
-			"name": "Custom Pathways (Optional)",
+			"name": "Advanced: Custom Pathways",
 			"description": "Use your own pathway database instead of or in addition to built-in collections"
 		},
 		{
 			"id": "visualization",
-			"name": "Visualization",
+			"name": "Advanced: Visualization",
 			"description": "Customize plot appearance and output"
+		},
+		{
+			"id": "compatibility",
+			"name": "Advanced: Legacy Compatibility",
+			"description": "Deprecated controls retained for older saved runs; they do not control the shared OMIX bubble plots"
 		}
 	],
 	"parameters": [
@@ -62,7 +67,7 @@
 		},
 		{
 			"id": "qNP3EAGr28c9VQm2",
-			"category": "basic",
+			"category": "columns",
 			"name": "Gene Names Column",
 			"param_name": "gene_names_column",
 			"description": "Optional gene-symbol column. Leave blank to auto-detect GeneName (the demo and OMIX workflow default), then Gene Symbols and other common identifiers. Enter an exact column name to override.",
@@ -102,7 +107,7 @@
 			"id": "T3sZoCglEZ0baHdR",
 			"category": "basic",
 			"name": "Pathway Collections",
-			"param_name": "collections",
+			"param_name": "collections_to_include",
 			"description": "Type one or more database codes. To run multiple databases together, join codes with commas and no spaces (e.g. H,REACTOME,KEGG). Common codes: H = Hallmark gene sets; GO = Gene Ontology; REACTOME = Reactome pathways; KEGG = KEGG pathways; WikiPathways = WikiPathways gene sets; PANTH = PANTHER pathways; PID = Pathway Interaction Database; BIOCYC = BioCyc pathways; C1 = MSigDB positional gene sets; C2 = MSigDB curated gene sets; C3 = MSigDB motif/regulatory target gene sets; C4 = MSigDB computational gene sets; C5 = MSigDB Gene Ontology gene sets; C6 = MSigDB oncogenic signatures; C7 = MSigDB immunologic signatures; C8 = MSigDB cell type signatures.",
 			"type": "text",
 			"value_type": "string",
@@ -153,7 +158,7 @@
 			"id": "OR7spe1g9Kl5oRR2",
 			"category": "gene_selection",
 			"name": "Select Top Percentage",
-			"param_name": "select_top_percentage",
+			"param_name": "select_top_percentage_of_genes",
 			"description": "Select top percentage of genes (vs fixed number)",
 			"type": "list",
 			"value_type": "boolean",
@@ -207,7 +212,7 @@
 		},
 		{
 			"id": "Y61xcxrjmGsq2QnI",
-			"category": "pathways",
+			"category": "compatibility",
 			"name": "Top Pathways to Compare",
 			"param_name": "top_pathways",
 			"description": "Deprecated compatibility setting. It no longer limits the exported pathway table; use Maximum Pathways to Plot to cap only the displayed rows.",
@@ -229,10 +234,10 @@
 		},
 		{
 			"id": "2webAq1rhK7bv70o",
-			"category": "pathways",
+			"category": "compatibility",
 			"name": "Maximum Pathways to Plot",
 			"param_name": "maximum_pathways_to_plot",
-			"description": "Maximum number of pathways to display in the bubble plot",
+			"description": "Deprecated compatibility setting for the retired legacy summary plot. Use Shared Bubble Plot Top Pathways for current OMIX figures.",
 			"type": "text",
 			"value_type": "number",
 			"default_value": "20",
@@ -444,7 +449,7 @@
 			"description": "Font size for pathway labels",
 			"type": "text",
 			"value_type": "number",
-			"default_value": "14",
+			"default_value": "5",
 			"minimum": 1
 		},
 		{
@@ -609,10 +614,10 @@
 		},
 		{
 			"id": "7xJPnGsytZvupWW0",
-			"category": "visualization",
-			"name": "Output Plot Path",
+			"category": "compatibility",
+			"name": "Legacy Output Plot Path",
 			"param_name": "output_plot",
-			"description": "File path for output bubble plot",
+			"description": "Deprecated compatibility value. The capsule no longer writes the legacy summary image; shared OMIX bubble plots are written beside Output Results Path.",
 			"type": "text",
 			"value_type": "string",
 			"default_value": "/results/l2p_multi_plot.png"

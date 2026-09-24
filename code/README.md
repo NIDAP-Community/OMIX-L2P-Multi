@@ -244,12 +244,12 @@ If the automatic column detection doesn't work for your data:
 
 ### Gene Selection
 Control which genes are included in the pathway analysis:
-- **Select by rank** (default: TRUE): Use top-ranked genes vs. significance thresholds
+- **Select by rank** (default: FALSE): Use top-ranked genes instead of the default significance and fold-change thresholds
 - **Select top percentage** (default: TRUE): Select top % of genes vs. fixed number
 - **Select top genes** (default: 500): Number of top genes when not using percentage
 - **Significance threshold** (default: 0.05): P-value cutoff when selecting by significance
 - **Fold change threshold** (default: 1.2): FC cutoff when selecting by significance
-- **Minimum DEG genes** (default: 50): Minimum genes required to proceed
+- **Minimum DEG genes** (default: 100): Minimum genes required to proceed
 
 ### Pathway Settings
 Filter and refine pathway results:
@@ -260,11 +260,11 @@ Filter and refine pathway results:
 
 ### Visualization
 Customize plot appearance:
-- **Number of pathways to plot** (default: 12): Top N pathways shown in each plot
-- **Pathway label max length** (default: 50): Truncate long pathway names
+- **Shared bubble plot top pathways** (default: 20): Top N pathways shown in each current OMIX plot
+- **Pathway label max length** (default: 45): Truncate long pathway names
 - **Font sizes**: Customize pathway labels, axis titles, and tick labels
 - **Custom pathway selection**: Manually specify which pathways to visualize (overrides automatic top N selection)
-- **Plot dimensions** (default: 12×12 inches): Width and height for saved plots
+- **Plot dimensions** (default: 14×16 inches): Width and height for saved plots
 - **Bubble plot variables**: Choose which metrics control bubble size, color, and sorting
 
 ## Tips for Multi-Comparison Analysis

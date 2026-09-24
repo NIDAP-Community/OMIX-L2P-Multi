@@ -19,6 +19,14 @@ deployment adapter.
 - Uploaded and attached multi-comparison DEG-table discovery under `/data`.
 - Capsule outputs under `/results` and the pinned runtime configuration.
 
+The attached demonstration dataset is from mouse, so the deployment presets
+**Species** to `Mouse` and provides its ordered example comparisons. The App
+Panel places the essential controls under **Main Settings** and keeps every
+supported tuning control visible in an **Advanced** category. Scientific
+parameter names match the canonical CLI; the older `--collections` and
+`--select_top_percentage` spellings remain accepted as command-line aliases
+for saved capsule runs.
+
 ## Overview
 
 **Version**: v4.0 | **Part of the OMIX analysis suite**
@@ -72,7 +80,7 @@ This analysis performs pathway enrichment using Fisher's exact test to identify 
   --gene_names_column "gene_name" \
   --comparisons "TreatmentB-Control,TreatmentC-Control" \
   --species "Human" \
-  --collections "H,REACTOME" \
+  --collections_to_include "H,REACTOME" \
   --select_by_rank FALSE \
   --maximum_pathways_to_plot 20
 ```
@@ -82,10 +90,10 @@ This analysis performs pathway enrichment using Fisher's exact test to identify 
 **Method 1: Rank-based (optional)**
 ```bash
 --select_by_rank TRUE \
---select_top_percentage TRUE    # Top 10% of genes by |t-statistic|
+--select_top_percentage_of_genes TRUE    # Top 10% of genes by |t-statistic|
 # OR
 --select_by_rank TRUE \
---select_top_percentage FALSE \
+--select_top_percentage_of_genes FALSE \
 --select_top_genes 500          # Top 500 genes by |t-statistic|
 ```
 
@@ -106,7 +114,7 @@ Available collections (comma-separated):
 - `C1`-`C8`: MSigDB curated collections
 - `WikiPathways`: WikiPathways database
 
-Example: `--collections "H,REACTOME,GO"`
+Example: `--collections_to_include "H,REACTOME,GO"`
 
 ### Using Custom Pathway Databases
 
@@ -164,7 +172,7 @@ My_Custom_Pathway_2,KRAS
 | `gene_names_column` | string | required | Column with gene names |
 | `comparisons` | string | required | Comma-separated comparison IDs |
 | `species` | string | "Mouse" | Species for ortholog mapping |
-| `collections` | string | "H" | Comma-separated pathway collections |
+| `collections_to_include` | string | "H" | Comma-separated pathway collections (`collections` remains a compatibility alias) |
 | `select_by_rank` | boolean | FALSE | Use the optional rank-based gene selection |
 | `maximum_pathways_to_plot` | integer | 20 | Limit rows displayed in the legacy summary plot |
 | `significance_threshold` | numeric | 0.05 | P-value threshold (if not rank-based) |
@@ -178,7 +186,7 @@ My_Custom_Pathway_2,KRAS
 - **`gene_names_column`**: Column containing gene symbols (default: "Gene")
 - **`comparisons`**: Comma-separated comparison IDs (e.g., "B-A, C-A, B-C")
 - **`species`**: Human, Mouse, Rat, Macaque, Zebrafish, Rabbit, Drosophila (default: "Mouse")
-- **`collections`**: Pathway collections - GO, REACTOME, KEGG, H, C1-C8, WikiPathways (default: "H")
+- **`collections_to_include`**: Pathway collections - GO, REACTOME, KEGG, H, C1-C8, WikiPathways (default: "H"; `collections` remains a compatibility alias)
 
 ### Column Overrides (Advanced)
 - **`t_statistic_columns`**: Override auto-detected t-statistic columns (comma-separated)
@@ -187,7 +195,7 @@ My_Custom_Pathway_2,KRAS
 
 ### Gene Selection Method
 - **`select_by_rank`**: Use rank-based selection (TRUE) or thresholds (FALSE) (default: FALSE)
-- **`select_top_percentage`**: Select top 10% (TRUE) or fixed number (FALSE) (default: TRUE)
+- **`select_top_percentage_of_genes`**: Select top 10% (TRUE) or fixed number (FALSE) (default: TRUE; `select_top_percentage` remains a compatibility alias)
 - **`select_top_genes`**: Number of top genes if not using percentage (default: 500)
 - **`significance_threshold`**: P-value threshold for threshold-based selection (default: 0.05)
 - **`fold_change_threshold`**: Fold change threshold for threshold-based selection (default: 1.2)
@@ -236,12 +244,12 @@ My_Custom_Pathway_2,KRAS
 - **`y_axis_title`**: Custom title for y-axis (pathway axis)
 - **`x_axis_title_font_size`**: Font size for x-axis title (default: 14)
 - **`y_axis_title_font_size`**: Font size for y-axis title (default: 14)
-- **`x_axis_tick_font_size`**: Font size for x-axis tick labels (default: 12)
+- **`x_axis_tick_font_size`**: Font size for x-axis tick labels (default: 14)
 - **`x_axis_tick_labels`**: Comma-separated custom labels for x-axis ticks
 - **`y_axis_tick_labels`**: Comma-separated custom labels for y-axis ticks
 
 ### Output Settings
-- **`output_plot`**: File path for output bubble plot (default: /results/l2p_multi_plot.png)
+- **`output_plot`**: Deprecated compatibility value for the retired legacy summary image; current shared plots are written beside `output_results`
 - **`output_results`**: File path for output results table (default: /results/l2p_multi_results.csv)
 - **`plot_width`**: Plot width in inches (default: 14)
 - **`plot_height`**: Plot height in inches (default: 16)

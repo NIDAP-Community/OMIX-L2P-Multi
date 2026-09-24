@@ -118,10 +118,16 @@ option_list <- list(
     help = "Update gene symbols [default %default]"
   ),
   make_option(
+    "--collections_to_include",
+    type = "character",
+    default = NULL,
+    help = "Comma-separated collections (GO,REACTOME,KEGG,H,C1-C8) [default H]"
+  ),
+  make_option(
     "--collections",
     type = "character",
-    default = "H",
-    help = "Comma-separated collections (GO,REACTOME,KEGG,H,C1-C8) [default %default]"
+    default = NULL,
+    help = "Deprecated alias for --collections_to_include"
   ),
   make_option(
     "--select_by_rank",
@@ -130,10 +136,16 @@ option_list <- list(
     help = "Select genes by rank [default %default]"
   ),
   make_option(
+    "--select_top_percentage_of_genes",
+    type = "logical",
+    default = NULL,
+    help = "Select top percentage of genes [default TRUE]"
+  ),
+  make_option(
     "--select_top_percentage",
     type = "logical",
-    default = TRUE,
-    help = "Select top percentage of genes [default %default]"
+    default = NULL,
+    help = "Deprecated alias for --select_top_percentage_of_genes"
   ),
   make_option(
     "--select_top_genes",
@@ -419,6 +431,23 @@ while (i <= length(args)) {
 
 opt <- parse_args(opt_parser, args = filtered_args)
 log_time("Parsed command-line arguments")
+
+source("functions/cli_compatibility.R")
+
+opt$collections_to_include <- resolve_compatibility_alias(
+  opt[["collections_to_include"]],
+  opt[["collections"]],
+  "H",
+  "collections_to_include",
+  "collections"
+)
+opt$select_top_percentage_of_genes <- resolve_compatibility_alias(
+  opt[["select_top_percentage_of_genes"]],
+  opt[["select_top_percentage"]],
+  TRUE,
+  "select_top_percentage_of_genes",
+  "select_top_percentage"
+)
 
 if (!opt$collection_color_scale %in% c("independent", "shared")) {
   stop("ERROR: Collection Color Scale must be 'independent' or 'shared'.")
@@ -1114,7 +1143,7 @@ comparisons_vec <- parse_comma_sep(opt$comparisons)
 t_stat_cols <- parse_comma_sep(opt$t_statistic_columns)
 sig_cols <- parse_comma_sep(opt$significance_columns)
 fc_cols <- parse_comma_sep(opt$fold_change_columns)
-collections_vec <- parse_comma_sep(opt$collections)
+collections_vec <- parse_comma_sep(opt$collections_to_include)
 log_time("Parsed column parameters")
 
 # ── Validate all required columns are present in deg_table ──────────────────
@@ -1312,7 +1341,7 @@ results <- l2p_multi(
   select_by_rank = opt$select_by_rank,
   top_pathways = opt$top_pathways,
   number_of_significant_events = opt$number_of_significant_events,
-  select_top_percentage_of_genes = opt$select_top_percentage,
+  select_top_percentage_of_genes = opt$select_top_percentage_of_genes,
   select_top_genes = opt$select_top_genes,
   significance_threshold = opt$significance_threshold,
   fold_change_threshold = opt$fold_change_threshold,
