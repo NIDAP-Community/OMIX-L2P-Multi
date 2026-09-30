@@ -30,9 +30,9 @@ scripts/run-local-codeocean-workflow-debug.sh \
   ghcr.io/nidap-community/omix-r-pathway:<tag>
 ```
 
-The runner uses the normal App Panel-style values for the three MOSuite
-comparisons (`B-A`, `C-A`, `B-C`), while the workflow input layer replaces the
-legacy `All DEG` file lookup with the upstream wide DEG table.
+The runner uses the attached-demo comparison order (`B-A`, `C-A`, `B-C`) while
+leaving `--deg_table` and column overrides blank. The workflow input layer must
+therefore select the one wide DEG table and infer all ordered column mappings.
 
 ## Run workflow-input checks
 

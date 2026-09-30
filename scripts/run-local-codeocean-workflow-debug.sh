@@ -33,11 +33,6 @@ docker run --rm \
   --entrypoint bash \
   "$image" \
   /code/run \
-  --deg_file "All DEG" \
-  --gene_names_column "GeneName" \
   --comparisons "B-A,C-A,B-C" \
-  --t_statistic_columns "tstat" \
-  --significance_columns "pval" \
-  --fold_change_columns "FC" \
   --species "Mouse" \
   "$@"

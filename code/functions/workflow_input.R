@@ -8,6 +8,63 @@ first_existing_column <- function(candidates, available_cols) {
   if (length(match) > 0L) match[[1L]] else NULL
 }
 
+select_unique_path <- function(paths, label, required = FALSE) {
+  paths <- sort(unique(normalizePath(paths, mustWork = FALSE)))
+  if (length(paths) > 1L) {
+    stop(
+      "ERROR: Multiple ", label, " candidates were found. Select the intended ",
+      "file explicitly.\n", paste(paths, collapse = "\n")
+    )
+  }
+  if (length(paths) == 0L) {
+    if (isTRUE(required)) {
+      stop("ERROR: No ", label, " candidate was found.")
+    }
+    return(NULL)
+  }
+  paths[[1L]]
+}
+
+find_attached_deg_table <- function(base_dir = "/data/deg_table", required = TRUE) {
+  candidates <- list.files(
+    base_dir,
+    pattern = "\\.(csv|tsv|txt|rds)$",
+    full.names = TRUE,
+    recursive = TRUE,
+    ignore.case = TRUE
+  )
+  select_unique_path(candidates, "attached DEG table", required = required)
+}
+
+find_filtered_deg_file <- function(base_dir = "/data", required = TRUE) {
+  candidates <- list.files(
+    base_dir,
+    pattern = "\\.csv$",
+    full.names = TRUE,
+    recursive = TRUE,
+    ignore.case = TRUE
+  )
+  candidates <- candidates[tolower(basename(candidates)) == "diff_filt.csv"]
+  select_unique_path(candidates, "Filtered DEG diff_filt.csv", required = required)
+}
+
+find_comparison_deg_file <- function(comparison, base_dir = "/data") {
+  candidates <- list.files(
+    base_dir,
+    pattern = "\\.csv$",
+    full.names = TRUE,
+    recursive = TRUE,
+    ignore.case = TRUE
+  )
+  target <- tolower(paste0("diff_", comparison, ".csv"))
+  matches <- candidates[tolower(basename(candidates)) == target]
+  select_unique_path(
+    matches,
+    paste0("All DEG file for comparison '", comparison, "'"),
+    required = TRUE
+  )
+}
+
 find_workflow_csv <- function(base_dir = "/data") {
   all_csv <- list.files(
     base_dir,
@@ -17,14 +74,7 @@ find_workflow_csv <- function(base_dir = "/data") {
     ignore.case = TRUE
   )
   matches <- all_csv[grepl("DEG", basename(all_csv), ignore.case = TRUE)]
-  if (length(matches) > 1L) {
-    stop(
-      "ERROR: Multiple workflow DEG CSV files were found under ", base_dir,
-      ". Specify an uploaded file or provide exactly one CSV whose filename ",
-      "matches the regex 'DEG'.\n", paste(matches, collapse = "\n")
-    )
-  }
-  if (length(matches) == 1L) matches[[1L]] else NULL
+  select_unique_path(matches, "workflow DEG CSV", required = FALSE)
 }
 
 find_workflow_moo_rds <- function(base_dir = "/data") {
@@ -36,13 +86,7 @@ find_workflow_moo_rds <- function(base_dir = "/data") {
     ignore.case = TRUE
   )
   matches <- all_rds[tolower(basename(all_rds)) == "moo-diff.rds"]
-  if (length(matches) > 1L) {
-    stop(
-      "ERROR: Multiple workflow moo-diff.rds files were found under ",
-      base_dir, ".\n", paste(matches, collapse = "\n")
-    )
-  }
-  if (length(matches) == 1L) matches[[1L]] else NULL
+  select_unique_path(matches, "workflow moo-diff.rds", required = FALSE)
 }
 
 load_workflow_moo_rds <- function(path) {

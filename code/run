@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# L2P Analysis (Single) - Run Script
-# Executes the L2P analysis workflow
+# L2P Analysis (Multi) - Code Ocean launcher
 
 echo "=== L2P Analysis Debug Timing Log ==="
 echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')"
