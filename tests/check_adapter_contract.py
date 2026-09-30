@@ -157,6 +157,7 @@ def audit(
     for required in (
         "OMIX_RESULTS_DIR",
         "find_attached_deg_table",
+        "filter_codeocean_arguments",
         'opt[["x_axis_title"]]',
         'opt[["y_axis_title"]]',
     ):

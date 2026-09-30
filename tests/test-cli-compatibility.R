@@ -28,6 +28,46 @@ stopifnot(
   !isTRUE(option_was_supplied(c("--other", "x"), "canonical"))
 )
 
+blank_collection_args <- filter_codeocean_arguments(c(
+  "--deg_table", "",
+  "--custom_pathways", "/data/custom.csv",
+  "--collections_to_include", "",
+  "--species", "Mouse"
+))
+blank_collection_index <- match(
+  "--collections_to_include",
+  blank_collection_args
+)
+blank_collection_value <- blank_collection_args[[blank_collection_index + 1L]]
+blank_alias_args <- filter_codeocean_arguments(c("--collections", ""))
+
+stopifnot(
+  !"--deg_table" %in% blank_collection_args,
+  "--custom_pathways" %in% blank_collection_args,
+  isTRUE(option_was_supplied(
+    blank_collection_args,
+    "collections_to_include"
+  )),
+  identical(blank_collection_value, ""),
+  identical(
+    resolve_compatibility_alias(
+      blank_collection_value,
+      NULL,
+      "H",
+      "collections_to_include",
+      "collections",
+      canonical_supplied = TRUE,
+      alias_supplied = FALSE
+    ),
+    ""
+  ),
+  identical(blank_alias_args, c("--collections", "")),
+  isTRUE(option_was_supplied(
+    "--collections_to_include=",
+    "collections_to_include"
+  ))
+)
+
 conflict <- tryCatch(
   resolve_compatibility_alias("GO", "H", "H", "canonical", "old"),
   error = identity

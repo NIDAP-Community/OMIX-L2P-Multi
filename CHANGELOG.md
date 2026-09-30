@@ -69,6 +69,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Removed hard-coded input file path requirement
 
 ### Fixed
+- An explicitly blank `collections_to_include` value is now preserved so a
+  custom pathway table can run without silently restoring Hallmark pathways.
+- The Code Ocean validation plan now checks requested comparison order in
+  analysis provenance and rendered axes, not in the plot manifest, which has
+  no comparison-order field.
 - Non-interactive runs no longer create an implicit `Rplots.pdf` in the code
   directory; plots are written only to the deployment-managed results path.
 - Reduced ortholog-mapping logs to a short preview rather than every mapped

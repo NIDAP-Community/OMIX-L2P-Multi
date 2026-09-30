@@ -23,7 +23,9 @@ Before each run, record:
 2. **Explicit user table**
    - Select a compatible CSV with `DEG Table`.
    - Use at least two comparisons in a nonalphabetical requested order.
-   - Confirm result and plot order matches the request.
+   - Confirm analysis provenance and every rendered plot axis preserve the
+     requested order. The canonical CSV is significance-sorted and does not
+     encode factor levels, so first-row occurrence is not an order assertion.
 3. **Workflow result**
    - Connect one upstream wide DEG result with comparison-specific t-statistic,
      p-value, and fold-change columns.
@@ -35,7 +37,8 @@ Before each run, record:
    - Run once with `pathway_bubble_significance_statistic=pval`,
      `collection_color_scale=shared`, and a nondefault `pathway_bubble_top_n`.
    - Run once with a small custom pathway table and verify its configured
-     pathway-name and gene-symbol columns.
+     pathway-name and gene-symbol columns. Clear `collections_to_include` and
+     confirm provenance/results contain only the custom database.
 
 ## Required artifacts and assertions
 
@@ -45,8 +48,12 @@ Before each run, record:
 - Shared combined, faceted, and collection-specific
   `L2P-Multi-Pathway-Bubble_*.png` files and the manifest are present when
   bubble plots are enabled.
-- The manifest records the requested comparison order, significance statistic,
-  selection scopes, dimensions, and color-scale behavior.
+- `l2p_multi_results_provenance.csv` records requested comparison order and the
+  aligned statistic, significance, and fold-change columns; rendered plot axes
+  use that same order.
+- The manifest records the significance statistic, selection scopes,
+  dimensions, selected counts, and color-scale ranges. It does not currently
+  carry comparison order.
 - No retired capsule-local legacy plot or user-selected output path is used.
 - No files are written outside `/results`.
 

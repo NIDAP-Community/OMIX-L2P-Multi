@@ -399,28 +399,14 @@ option_list <- list(
 
 opt_parser <- OptionParser(option_list = option_list)
 
-# Filter out empty string arguments before optparse sees them
-# Code Ocean passes --param "" for blank file uploads, which optparse rejects
+# Filter Code Ocean blank values while preserving a deliberately empty built-in
+# collection list for custom-only analysis.
+source("functions/cli_compatibility.R")
 args <- commandArgs(trailingOnly = TRUE)
-filtered_args <- character()
-i <- 1
-while (i <= length(args)) {
-  # Skip standalone empty strings
-  if (args[i] == "") {
-    i <- i + 1
-  } else if (i < length(args) && startsWith(args[i], "--") && args[i+1] == "") {
-    # Skip flag + empty value pairs
-    i <- i + 2
-  } else {
-    filtered_args <- c(filtered_args, args[i])
-    i <- i + 1
-  }
-}
+filtered_args <- filter_codeocean_arguments(args)
 
 opt <- parse_args(opt_parser, args = filtered_args)
 log_time("Parsed command-line arguments")
-
-source("functions/cli_compatibility.R")
 
 opt$collections_to_include <- resolve_compatibility_alias(
   opt[["collections_to_include"]],

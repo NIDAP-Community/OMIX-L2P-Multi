@@ -84,6 +84,10 @@ platform result paths are not shown in the App Panel.
 | `pathway_bubble_top_n` | `20` | Rows per standardized plot scope; `0` means all. |
 | `pathway_bubble_significance_statistic` | `padj` | `padj` or `pval` for shared-plot selection and shapes. |
 
+When supplying a custom pathway database alone, clear
+`collections_to_include`. The adapter preserves that intentional blank rather
+than restoring `H`; blank file selectors remain safely omitted.
+
 All additional supported controls remain available in the App Panel's advanced
 sections. See the canonical
 [interface schema](https://github.com/NIDAP-Community/OMIX/blob/main/modules/OMIX-L2P-Multi/schemas/interface.yml)
@@ -93,11 +97,14 @@ for exact types, allowed values, and semantics.
 
 The adapter writes stable artifacts under `/results`:
 
-- `l2p_multi_results.csv` — all pathways meeting export criteria;
-- `l2p_multi_results_provenance.csv` — result provenance;
+- `l2p_multi_results.csv` — all pathways meeting export criteria, ordered by
+  canonical significance sorting rather than contrast-first occurrence;
+- `l2p_multi_results_provenance.csv` — result provenance, including requested
+  comparison order and aligned input columns;
 - `L2P-Multi-Pathway-Bubble_*.png` — standardized shared plots; and
-- `L2P-Multi-Pathway-Bubble_manifest.csv` — selection, ordering, scale, and
-  figure metadata.
+- `L2P-Multi-Pathway-Bubble_manifest.csv` — selection, scale, and figure
+  metadata. Comparison order is verified from provenance and rendered axes,
+  not this manifest.
 
 ## Compatibility
 

@@ -20,5 +20,7 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_*.py'
       - name: Verify CLI compatibility aliases
         run: Rscript tests/test-cli-compatibility.R
+      - name: Verify custom-only output assertions
+        run: Rscript tests/test-custom-only-output.R
       - name: Verify deterministic workflow input discovery
         run: Rscript tests/test-workflow-input.R
