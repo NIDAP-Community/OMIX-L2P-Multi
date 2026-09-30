@@ -1,0 +1,24 @@
+name: Adapter contract
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - name: Check App Panel and named-parameter bindings
+        run: python3 tests/check_adapter_contract.py
+      - name: Verify contract failure detection
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Verify CLI compatibility aliases
+        run: Rscript tests/test-cli-compatibility.R
+      - name: Verify deterministic workflow input discovery
+        run: Rscript tests/test-workflow-input.R

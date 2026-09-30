@@ -5,8 +5,10 @@ resolve_compatibility_alias <- function(
     alias_value,
     default_value,
     canonical_name,
-    alias_name) {
-  if (!is.null(canonical_value) && !is.null(alias_value)) {
+    alias_name,
+    canonical_supplied = !is.null(canonical_value),
+    alias_supplied = !is.null(alias_value)) {
+  if (isTRUE(canonical_supplied) && isTRUE(alias_supplied)) {
     if (!identical(canonical_value, alias_value)) {
       stop(sprintf(
         "ERROR: --%s and its deprecated alias --%s were both set to different values.",
@@ -16,8 +18,8 @@ resolve_compatibility_alias <- function(
     }
     return(canonical_value)
   }
-  if (!is.null(canonical_value)) return(canonical_value)
-  if (!is.null(alias_value)) {
+  if (isTRUE(canonical_supplied)) return(canonical_value)
+  if (isTRUE(alias_supplied)) {
     warning(sprintf(
       "--%s is deprecated; use --%s for new runs.",
       alias_name,
@@ -26,4 +28,9 @@ resolve_compatibility_alias <- function(
     return(alias_value)
   }
   default_value
+}
+
+option_was_supplied <- function(arguments, option_name) {
+  any(arguments == paste0("--", option_name)) ||
+    any(startsWith(arguments, paste0("--", option_name, "=")))
 }

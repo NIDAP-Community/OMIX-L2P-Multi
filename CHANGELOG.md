@@ -8,6 +8,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 ## [Unreleased]
 
 ### Added
+- Canonical interface-1 App Panel coverage for all 29 public and advanced
+  controls, plus schema/source SHA-256 provenance and a Code Ocean validation
+  plan.
+- Deterministic attached-input helpers and regression tests that fail with all
+  candidate paths instead of selecting the first table on ambiguity.
 - Static App Panel contract checks covering complete CLI exposure, canonical
   parameter names, compatibility aliases, category organization, and defaults.
 - Local workflow-input tests and a reproducible Code Ocean-shaped debug
@@ -31,8 +36,15 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
-- Reorganized the App Panel into Main and clearly labeled Advanced categories
-  without hiding any supported adapter CLI control.
+- Reorganized the App Panel into Main and Advanced categories containing only
+  canonical public and advanced controls. The 23 internal, deprecated, and
+  inactive legacy-renderer controls are no longer shown.
+- Added the canonical `deg_table` file selector and retained `deg_file` only as
+  a released CLI alias for older saved runs.
+- Made platform result paths internal and stable under `/results`; removed the
+  obsolete `output_plot` and `output_results` App Panel/CLI controls.
+- Restored the adapter CLI's canonical `Human` species default. The App Panel
+  still presets `Mouse` and `B-A,C-A,B-C` solely for the attached demo.
 - The panel now emits canonical `collections_to_include` and
   `select_top_percentage_of_genes` parameters. The previously released
   `collections` and `select_top_percentage` command-line spellings remain
@@ -44,15 +56,10 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
   `Filtered DEG` data-asset modes. It selects one CSV whose filename matches
   the case-insensitive regex `DEG` and infers every requested comparison's
   t-statistic, significance, and fold-change columns.
-- Aligned the runtime species default with the Code Ocean App Panel (`Mouse`).
-- Replaced `--input_file` parameter with `--deg_file` for consistency
 - Data loading logic now supports three input methods:
   1. Direct file upload via App Panel (highest priority)
   2. Data asset attached at `/data/deg_table/` mount point
   3. Falls back with clear error if neither provided
-- Default organism changed from "Human" to "Mouse" (2026-07-08)
-  - Updated in App Panel default value
-  - Updated in `/code/README.md` documentation
 - Capsule name simplified from "OMIX L2P Pathway Analysis (Multi)" to "OMIX L2P Multi" (2026-07-08)
 - App Panel categories reorganized from 10 to 6 standardized categories (2026-07-08)
   - New structure: Basic Settings, Column Overrides, Gene Selection, Pathway Settings, Custom Pathways, Visualization
@@ -63,7 +70,7 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 
 ### Fixed
 - Non-interactive runs no longer create an implicit `Rplots.pdf` in the code
-  directory; plots are written only to the explicit results path.
+  directory; plots are written only to the deployment-managed results path.
 - Reduced ortholog-mapping logs to a short preview rather than every mapped
   gene.
 - App Panel now uses named parameters mode (2026-01-08)
@@ -73,7 +80,8 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Empty string argument handling in main.R (2026-01-08)
   - Filters out blank file upload parameters before parsing
   - Resolves "not a valid option" errors when using demo data
-- Removed input file existence validation (now handled by data loading logic)
+- Explicit input paths and auto-discovered candidates are validated before
+  analysis.
 
 ## [v4] - 2026-07-06
 

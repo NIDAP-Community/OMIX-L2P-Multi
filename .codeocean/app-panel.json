@@ -1,636 +1,329 @@
 {
-	"version": 1,
-	"named_parameters": true,
-	"general": {
-		"title": "L2P Multi-Comparison Pathway Analysis",
-		"instructions": "All input data uses mount name 'deg_table'. Attach your dataset with mount name 'deg_table' to replace the demo.\n\n- (blank) or Table: auto-detects one flat table or RDS from mount 'deg_table'\n- Filtered DEG: MOSuite moo-properties asset after 'filter differential expression'\n- All DEG: MOSuite moo-properties asset after 'differential expression analysis'\n\nSet Comparisons to the ordered comparison IDs in your data. Threshold selection (nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2) is the default. Shared OMIX pathway bubble plots show the top 20 pathways while the CSV retains every pathway that meets the selected significance and hit-count criteria. Essential controls are under Main Settings; expand the Advanced categories to tune column detection, selection, filtering, custom pathways, or plot appearance."
-	},
-	"datasets": [
-		{
-			"id": "28035d52-03e6-4761-8f50-72d48af496d1",
-			"name": "Demo DEG Table",
-			"description": "Demo Mouse RNA-seq data (mount: deg_table). Replaced automatically when you attach your own dataset with the same mount name."
-		}
-	],
-	"categories": [
-		{
-			"id": "basic",
-			"name": "Main Settings",
-			"description": "Input mode and the essential parameters for a standard run"
-		},
-		{
-			"id": "columns",
-			"name": "Advanced: Column Overrides",
-			"description": "Override auto-detected columns only when the input uses nonstandard names"
-		},
-		{
-			"id": "gene_selection",
-			"name": "Advanced: Gene Selection",
-			"description": "Tune rank- or threshold-based gene selection"
-		},
-		{
-			"id": "pathways",
-			"name": "Advanced: Pathway Filtering",
-			"description": "Tune pathway hit and significance filtering"
-		},
-		{
-			"id": "custom_pathways",
-			"name": "Advanced: Custom Pathways",
-			"description": "Use your own pathway database instead of or in addition to built-in collections"
-		},
-		{
-			"id": "visualization",
-			"name": "Advanced: Visualization",
-			"description": "Customize plot appearance and output"
-		},
-		{
-			"id": "compatibility",
-			"name": "Advanced: Legacy Compatibility",
-			"description": "Deprecated controls retained for older saved runs; they do not control the shared OMIX bubble plots"
-		}
-	],
-	"parameters": [
-		{
-			"id": "deg_file_upload",
-			"category": "basic",
-			"name": "DEG Table File",
-			"param_name": "deg_file",
-			"description": "Select the differential analysis input type. Table - uses a single flat table with differential analysis information. Filtered DEG - uses data from \"Filter Differential Analysis\". All DEG - uses data from \"Differential Expression Analysis\".\n\nBlank / Table: auto-detect a flat DEG table (CSV/TSV/RDS) from /data/deg_table/.\n\nFiltered DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads analyses/diff_filt.csv — filtered genes, all comparisons combined. Use after 'MOSuite - filter differential expression' capsule.\n\nAll DEG: MOSuite moo-properties asset at mount 'deg_table'. Loads and merges per-comparison diff_{comparison}.csv files. Use after 'MOSuite - differential expression analysis' capsule.",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "Table",
-			"extra_data": [
-				"Table",
-				"Filtered DEG",
-				"All DEG"
-			]
-		},
-		{
-			"id": "qNP3EAGr28c9VQm2",
-			"category": "columns",
-			"name": "Gene Names Column",
-			"param_name": "gene_names_column",
-			"description": "Optional gene-symbol column. Leave blank to auto-detect GeneName (the demo and OMIX workflow default), then Gene Symbols and other common identifiers. Enter an exact column name to override.",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "eUXk7u4FwvJfsI63",
-			"category": "basic",
-			"name": "Comparisons",
-			"param_name": "comparisons",
-			"description": "Comma-separated comparison IDs (e.g. 'B-A,C-A,B-C'). Used to find per-comparison files in All DEG mode (diff_B-A.csv etc.) and to derive column names.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "B-A, C-A, B-C"
-		},
-		{
-			"id": "2fQ9EiFJis3IXVf8",
-			"category": "basic",
-			"name": "Species",
-			"param_name": "species",
-			"description": "Species for ortholog mapping. Non-human genes are converted to human before L2P analysis",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "Mouse",
-			"extra_data": [
-				"Human",
-				"Mouse",
-				"Rat",
-				"Macaque",
-				"Zebrafish",
-				"Rabbit",
-				"Drosophila"
-			]
-		},
-		{
-			"id": "T3sZoCglEZ0baHdR",
-			"category": "basic",
-			"name": "Pathway Collections",
-			"param_name": "collections_to_include",
-			"description": "Type one or more database codes. To run multiple databases together, join codes with commas and no spaces (e.g. H,REACTOME,KEGG). Common codes: H = Hallmark gene sets; GO = Gene Ontology; REACTOME = Reactome pathways; KEGG = KEGG pathways; WikiPathways = WikiPathways gene sets; PANTH = PANTHER pathways; PID = Pathway Interaction Database; BIOCYC = BioCyc pathways; C1 = MSigDB positional gene sets; C2 = MSigDB curated gene sets; C3 = MSigDB motif/regulatory target gene sets; C4 = MSigDB computational gene sets; C5 = MSigDB Gene Ontology gene sets; C6 = MSigDB oncogenic signatures; C7 = MSigDB immunologic signatures; C8 = MSigDB cell type signatures.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "H"
-		},
-		{
-			"id": "I5YmDGcBOFV2FD6s",
-			"category": "columns",
-			"name": "T-Statistic Columns",
-			"param_name": "t_statistic_columns",
-			"description": "Optional t-statistic-column override. Leave blank to auto-detect MOSuite 'tstat' or comparison-prefixed columns such as 'B-A_tstat'. For fully custom naming, enter one column per comparison in order, comma-separated.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": ""
-		},
-		{
-			"id": "uPPkk2mh7dEjx1hA",
-			"category": "columns",
-			"name": "Significance Columns",
-			"param_name": "significance_columns",
-			"description": "Optional significance-column override. Leave blank to auto-detect nominal p-value columns first (for example, 'pval' or 'B-A_pval'); adjusted p-values are only used when explicitly selected or when no nominal p-value is available. For fully custom naming, enter one column per comparison in order, comma-separated.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": ""
-		},
-		{
-			"id": "oL23Pa1gVX78Dln6",
-			"category": "columns",
-			"name": "Fold Change Columns",
-			"param_name": "fold_change_columns",
-			"description": "Optional fold-change-column override. Leave blank to auto-detect MOSuite 'FC' or comparison-prefixed columns such as 'B-A_FC'. For fully custom naming, enter one column per comparison in order, comma-separated.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": ""
-		},
-		{
-			"id": "fgY5hinPeTayVrU0",
-			"category": "gene_selection",
-			"name": "Select By Rank",
-			"param_name": "select_by_rank",
-			"description": "Use the legacy t-statistic rank method. Leave FALSE (default) to select genes by nominal p-value ≤ 0.05 and absolute fold change ≥ 1.2.",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "False",
-			"extra_data": []
-		},
-		{
-			"id": "OR7spe1g9Kl5oRR2",
-			"category": "gene_selection",
-			"name": "Select Top Percentage",
-			"param_name": "select_top_percentage_of_genes",
-			"description": "Select top percentage of genes (vs fixed number)",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "True",
-			"extra_data": []
-		},
-		{
-			"id": "QITcMp3bOV4kjkzA",
-			"category": "gene_selection",
-			"name": "Number of Top Genes",
-			"param_name": "select_top_genes",
-			"description": "Number of top genes to select (if not using percentage)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "500",
-			"minimum": 1
-		},
-		{
-			"id": "j7WEJQsW5EOJjoGI",
-			"category": "gene_selection",
-			"name": "Significance Threshold",
-			"param_name": "significance_threshold",
-			"description": "P-value threshold for gene selection (if not using rank)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "0.05",
-			"minimum": 0,
-			"maximum": 1
-		},
-		{
-			"id": "G1QCwi2DA9Kit3La",
-			"category": "gene_selection",
-			"name": "Fold Change Threshold",
-			"param_name": "fold_change_threshold",
-			"description": "Fold change threshold for gene selection (if not using rank)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "1.2",
-			"minimum": 1
-		},
-		{
-			"id": "M2Wa4E2fWkceD55j",
-			"category": "gene_selection",
-			"name": "Minimum DEG Genes",
-			"param_name": "minimum_number_of_deg_genes",
-			"description": "Minimum number of DEG genes required per comparison",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "100",
-			"minimum": 1
-		},
-		{
-			"id": "Y61xcxrjmGsq2QnI",
-			"category": "compatibility",
-			"name": "Top Pathways to Compare",
-			"param_name": "top_pathways",
-			"description": "Deprecated compatibility setting. It no longer limits the exported pathway table; use Maximum Pathways to Plot to cap only the displayed rows.",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "10",
-			"minimum": 1
-		},
-		{
-			"id": "71s4fi7ydy3Kg6e1",
-			"category": "pathways",
-			"name": "Minimum Significant Events",
-			"param_name": "number_of_significant_events",
-			"description": "Minimum number of comparisons where pathway must be significant",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "1",
-			"minimum": 1
-		},
-		{
-			"id": "2webAq1rhK7bv70o",
-			"category": "compatibility",
-			"name": "Maximum Pathways to Plot",
-			"param_name": "maximum_pathways_to_plot",
-			"description": "Deprecated compatibility setting for the retired legacy summary plot. Use Shared Bubble Plot Top Pathways for current OMIX figures.",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "20",
-			"minimum": 1
-		},
-		{
-			"id": "Vx4r8QWz0pMeTLsJ",
-			"category": "visualization",
-			"name": "Write Shared Bubble Plots",
-			"param_name": "pathway_bubble_plots",
-			"description": "Write standardized OMIX pathway-bubble figures and a manifest. The deprecated capsule-local summary image is no longer written.",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "True",
-			"extra_data": []
-		},
-		{
-			"id": "WEnq3D0X7pKlmB9f",
-			"category": "visualization",
-			"name": "Shared Bubble Plot Top Pathways",
-			"param_name": "pathway_bubble_top_n",
-			"description": "Maximum pathway rows shown in each standardized bubble plot. 0 shows all eligible pathways; exports always retain all eligible pathways.",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "20",
-			"minimum": 0
-		},
-		{
-			"id": "R8uP1Hn6ZkQqYxB2",
-			"category": "visualization",
-			"name": "Bubble Plot Significance Statistic",
-			"param_name": "pathway_bubble_significance_statistic",
-			"description": "Statistic used for standardized-bubble selection and significance shapes. Adjusted p-value/FDR is the default so pathway tools use the same criterion.",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "padj",
-			"extra_data": [
-				"padj",
-				"pval"
-			]
-		},
-		{
-			"id": "Ui3NsKz6Fq1rXdW4",
-			"category": "visualization",
-			"name": "Collection Color Scale",
-			"param_name": "collection_color_scale",
-			"description": "Use independent color limits per collection (default) so smaller collections remain legible, or one shared scale for direct color comparison.",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "independent",
-			"extra_data": [
-				"independent",
-				"shared"
-			]
-		},
-		{
-			"id": "gYXJBzZhFmwgeHSS",
-			"category": "pathways",
-			"name": "Minimum Pathway Hits",
-			"param_name": "minimum_pathway_hit_count",
-			"description": "Minimum genes required per pathway to be considered",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "5",
-			"minimum": 1
-		},
-		{
-			"id": "7QrQzJTTmSpvenM4",
-			"category": "pathways",
-			"name": "Pathway Size Limit",
-			"param_name": "pathway_size_limit",
-			"description": "Maximum pathway size (pathways with more genes are excluded)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "500",
-			"minimum": 1
-		},
-		{
-			"id": "iJ8Y3zvGEZwJcTGn",
-			"category": "pathways",
-			"name": "P-value Threshold",
-			"param_name": "p_value_limit",
-			"description": "P-value cutoff for including pathways in results (0 = include all)",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "0.05",
-			"minimum": 0,
-			"maximum": 1
-		},
-		{
-			"id": "bbU8CJAFOkGL98xg",
-			"category": "pathways",
-			"name": "Use Built-in Gene Universe",
-			"param_name": "use_built_in_gene_universe",
-			"description": "Use built-in gene universe instead of detected genes",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "False",
-			"extra_data": []
-		},
-		{
-			"id": "4BkHmpc9NVkXeY5x",
-			"category": "pathways",
-			"name": "Use FDR P-values",
-			"param_name": "use_fdr_for_significance",
-			"description": "Use FDR-adjusted p-values for pathway significance",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "False",
-			"extra_data": []
-		},
-		{
-			"id": "TGpL4APLgZOdIanR",
-			"category": "pathways",
-			"name": "Update Gene Symbols",
-			"param_name": "update_genes",
-			"description": "Update gene symbols to current nomenclature",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "True",
-			"extra_data": []
-		},
-		{
-			"id": "XZcuON2LQDwX8LFI",
-			"category": "custom_pathways",
-			"name": "Custom Pathway File",
-			"param_name": "custom_pathways",
-			"description": "Select custom pathway file from attached data assets (TSV/CSV format). Leave blank to use only standard collections.",
-			"type": "file",
-			"value_type": "string"
-		},
-		{
-			"id": "1kXJttlCROvenBV5",
-			"category": "custom_pathways",
-			"name": "Pathway Name Column",
-			"param_name": "custom_pathway_name_column",
-			"description": "Column name containing pathway names in custom file",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "gene_set_name"
-		},
-		{
-			"id": "4yCgLnbkEmwdnIDN",
-			"category": "custom_pathways",
-			"name": "Gene Symbol Column",
-			"param_name": "custom_pathway_gene_column",
-			"description": "Column name containing gene symbols in custom file",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "gene_symbol"
-		},
-		{
-			"id": "dtnU7fMfV8aCJAZO",
-			"category": "visualization",
-			"name": "Bubble Size Metric",
-			"param_name": "plot_bubble_size",
-			"description": "Metric to determine bubble size",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "pval",
-			"extra_data": [
-				"pval",
-				"fdr",
-				"number_hits"
-			]
-		},
-		{
-			"id": "ZoGjT5QXBvK4WQD1",
-			"category": "visualization",
-			"name": "Bubble Color Metric",
-			"param_name": "plot_bubble_color",
-			"description": "Metric to determine bubble color gradient",
-			"type": "list",
-			"value_type": "string",
-			"default_value": "enrichment_score",
-			"extra_data": [
-				"enrichment_score",
-				"net_enrichment_score",
-				"percent_gene_hits_per_pathway"
-			]
-		},
-		{
-			"id": "GsH1moXfxkrFcLcz",
-			"category": "visualization",
-			"name": "Bubble Max Color Value",
-			"param_name": "plot_bubble_max_color",
-			"description": "Maximum value for color scale gradient",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "1",
-			"minimum": 0
-		},
-		{
-			"id": "7b11vwPwZirTBn0F",
-			"category": "visualization",
-			"name": "Pathway Label Max Length",
-			"param_name": "pathway_axis_label_max_length",
-			"description": "Maximum character length for pathway names",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "45",
-			"minimum": 10
-		},
-		{
-			"id": "po3QfLbrmvSipSUk",
-			"category": "visualization",
-			"name": "Pathway Label Font Size",
-			"param_name": "pathway_axis_label_font_size",
-			"description": "Font size for pathway labels",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "5",
-			"minimum": 1
-		},
-		{
-			"id": "ZidGBmAHKkt7Gum4",
-			"category": "visualization",
-			"name": "Dynamic Pathway Font Size",
-			"param_name": "use_dynamic_pathway_font_size",
-			"description": "Automatically adjust pathway label font size based on number of pathways",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "True",
-			"extra_data": []
-		},
-		{
-			"id": "i1jyF1pMHsz45FwM",
-			"category": "visualization",
-			"name": "X-Axis Title",
-			"param_name": "x_axis_title",
-			"description": "Optional custom title for the x-axis. Leave blank for no title",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "TyBMKmvaMQJfHaNv",
-			"category": "visualization",
-			"name": "Y-Axis Title",
-			"param_name": "y_axis_title",
-			"description": "Optional custom title for the y-axis. Leave blank for no title",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "8aqNUHYIsUG7SXzj",
-			"category": "visualization",
-			"name": "X-Axis Title Font Size",
-			"param_name": "x_axis_title_font_size",
-			"description": "Font size for x-axis title",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 1
-		},
-		{
-			"id": "KxB7Yee4gc131KPk",
-			"category": "visualization",
-			"name": "Y-Axis Title Font Size",
-			"param_name": "y_axis_title_font_size",
-			"description": "Font size for y-axis title",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 1
-		},
-		{
-			"id": "7sH27UseIr4NIVLc",
-			"category": "visualization",
-			"name": "X-Axis Tick Font Size",
-			"param_name": "x_axis_tick_font_size",
-			"description": "Font size for x-axis tick labels",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 1
-		},
-		{
-			"id": "OQR58Hg9IzgY4A2w",
-			"category": "visualization",
-			"name": "X-Axis Tick Labels",
-			"param_name": "x_axis_tick_labels",
-			"description": "Comma-separated custom labels for x-axis ticks. Must match number of comparisons. Leave blank to use defaults",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "eJsoUs2t5EI1RIq9",
-			"category": "visualization",
-			"name": "Y-Axis Tick Labels",
-			"param_name": "y_axis_tick_labels",
-			"description": "Comma-separated custom labels for y-axis ticks. Must match number of pathways. Leave blank to use defaults",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "7Iq5sfNOwnuwOckB",
-			"category": "visualization",
-			"name": "Pathways to Remove",
-			"param_name": "pathways_to_remove",
-			"description": "Comma-separated list of pathway names to exclude from plot",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "1nRNlRDM9HvPLaln",
-			"category": "visualization",
-			"name": "Rename Groups",
-			"param_name": "rename_groups",
-			"description": "Comma-separated new names for comparison groups (must match number of comparisons)",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "wQQDlcLWqnlHGyW6",
-			"category": "visualization",
-			"name": "Vertical Line Placement",
-			"param_name": "vertical_line_placement",
-			"description": "Comma-separated positions for vertical separator lines between groups",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "5w1ZsGYAEW3kz1N6",
-			"category": "visualization",
-			"name": "Custom Pathway Order",
-			"param_name": "custom_pathway_order",
-			"description": "Comma-separated pathway names to define custom Y-axis order",
-			"type": "text",
-			"value_type": "string"
-		},
-		{
-			"id": "FbYTJuzxEcr8IMoS",
-			"category": "visualization",
-			"name": "Use Panel Plot",
-			"param_name": "use_panel_plot",
-			"description": "Use panel layout (splits comparisons into separate panels)",
-			"type": "list",
-			"value_type": "boolean",
-			"default_value": "False",
-			"extra_data": []
-		},
-		{
-			"id": "nADyZeuRxCUTf1YG",
-			"category": "visualization",
-			"name": "Column Spacing",
-			"param_name": "column_spacing",
-			"description": "Spacing between comparison columns in the plot",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "0.5",
-			"minimum": 0
-		},
-		{
-			"id": "4BGgaRQXMtiXdojT",
-			"category": "visualization",
-			"name": "Plot Width",
-			"param_name": "plot_width",
-			"description": "Plot width in inches",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "14",
-			"minimum": 4
-		},
-		{
-			"id": "0muXPO2uRZB7MkYy",
-			"category": "visualization",
-			"name": "Plot Height",
-			"param_name": "plot_height",
-			"description": "Plot height in inches",
-			"type": "text",
-			"value_type": "number",
-			"default_value": "16",
-			"minimum": 4
-		},
-		{
-			"id": "7xJPnGsytZvupWW0",
-			"category": "compatibility",
-			"name": "Legacy Output Plot Path",
-			"param_name": "output_plot",
-			"description": "Deprecated compatibility value. The capsule no longer writes the legacy summary image; shared OMIX bubble plots are written beside Output Results Path.",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "/results/l2p_multi_plot.png"
-		},
-		{
-			"id": "TbMCa9G7buigMeAk",
-			"category": "visualization",
-			"name": "Output Results Path",
-			"param_name": "output_results",
-			"description": "File path for output results table",
-			"type": "text",
-			"value_type": "string",
-			"default_value": "/results/l2p_multi_results.csv"
-		}
-	]
+  "version": 1,
+  "named_parameters": true,
+  "general": {
+    "title": "L2P Multi-Comparison Pathway Analysis",
+    "instructions": "Attach or upload one wide DEG table and enter comparison IDs in the exact order to analyze and plot. Leave DEG Table blank to use the attached demo asset or one unambiguous workflow DEG table. The demo presets use Mouse and B-A,C-A,B-C; replace them for your data. Threshold selection (p-value <= 0.05 and absolute fold change >= 1.2) and adjusted-p-value bubble-plot significance are the defaults. Advanced sections expose every supported canonical tuning control; retired legacy-renderer and platform output-path controls are intentionally hidden."
+  },
+  "datasets": [
+    {
+      "id": "28035d52-03e6-4761-8f50-72d48af496d1",
+      "name": "Demo DEG Table",
+      "description": "Mouse multi-comparison DEG table mounted at /data/deg_table. Replace it with one matching wide table or select a file explicitly."
+    }
+  ],
+  "categories": [
+    {"id": "input", "name": "Main: Input and Comparisons", "description": "Choose the DEG table and ordered comparisons."},
+    {"id": "columns", "name": "Advanced: Column Overrides", "description": "Override automatic gene and comparison-column discovery only for nonstandard tables."},
+    {"id": "selection", "name": "Main: Gene Selection", "description": "Select differential genes by thresholds or the optional legacy rank method."},
+    {"id": "pathways", "name": "Main: Pathways", "description": "Choose pathway collections and result-selection criteria."},
+    {"id": "custom", "name": "Advanced: Custom Pathways", "description": "Add a compatible custom pathway table or RDS object."},
+    {"id": "plots", "name": "Main: Shared Bubble Plots", "description": "Configure standardized OMIX pathway bubble plots."},
+    {"id": "advanced", "name": "Advanced: Analysis", "description": "Additional supported pathway-analysis controls."}
+  ],
+  "parameters": [
+    {
+      "id": "deg_table",
+      "category": "input",
+      "name": "DEG Table",
+      "param_name": "deg_table",
+      "description": "Optional explicit CSV, TSV, TXT, or RDS DEG table. Leave blank to use exactly one supported table from the attached /data/deg_table asset or one unambiguous workflow DEG result.",
+      "type": "file",
+      "value_type": "string"
+    },
+    {
+      "id": "custom_pathways",
+      "category": "custom",
+      "name": "Custom Pathway File",
+      "param_name": "custom_pathways",
+      "description": "Optional CSV, TSV, TXT, or RDS custom pathway database. It may be used alone or with built-in collections.",
+      "type": "file",
+      "value_type": "string"
+    },
+    {
+      "id": "comparisons",
+      "category": "input",
+      "name": "Comparisons",
+      "param_name": "comparisons",
+      "description": "Required comma-separated comparison IDs in the exact analysis and plot order. IDs infer matching columns when overrides are blank. The demo uses B-A,C-A,B-C.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "B-A,C-A,B-C"
+    },
+    {
+      "id": "gene_names_column",
+      "category": "columns",
+      "name": "Gene Names Column",
+      "param_name": "gene_names_column",
+      "description": "Optional exact gene-symbol column. Leave blank to infer a common gene column name.",
+      "type": "text",
+      "value_type": "string"
+    },
+    {
+      "id": "t_statistic_columns",
+      "category": "columns",
+      "name": "T-Statistic Columns",
+      "param_name": "t_statistic_columns",
+      "description": "Optional comma-separated signed-rank columns aligned one-to-one with Comparisons. Leave blank to infer them.",
+      "type": "text",
+      "value_type": "string"
+    },
+    {
+      "id": "significance_columns",
+      "category": "columns",
+      "name": "Significance Columns",
+      "param_name": "significance_columns",
+      "description": "Optional comma-separated p-value or adjusted-p-value columns aligned one-to-one with Comparisons. Leave blank to infer them.",
+      "type": "text",
+      "value_type": "string"
+    },
+    {
+      "id": "fold_change_columns",
+      "category": "columns",
+      "name": "Fold Change Columns",
+      "param_name": "fold_change_columns",
+      "description": "Optional comma-separated linear- or log-fold-change columns aligned one-to-one with Comparisons. Leave blank to infer them.",
+      "type": "text",
+      "value_type": "string"
+    },
+    {
+      "id": "species",
+      "category": "input",
+      "name": "Species",
+      "param_name": "species",
+      "description": "Species used for gene-symbol validation and ortholog mapping. Mouse is the attached demo preset; the canonical portable default is Human.",
+      "type": "list",
+      "value_type": "string",
+      "default_value": "Mouse",
+      "extra_data": ["Human", "Mouse", "Macaque", "Rat", "Zebrafish", "Rabbit", "Drosophila"]
+    },
+    {
+      "id": "update_genes",
+      "category": "advanced",
+      "name": "Update Gene Symbols",
+      "param_name": "update_genes",
+      "description": "Update symbols for L2P while retaining original symbols in results.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "True",
+      "extra_data": []
+    },
+    {
+      "id": "collections_to_include",
+      "category": "pathways",
+      "name": "Pathway Collections",
+      "param_name": "collections_to_include",
+      "description": "Comma-separated built-in collection codes: GO, REACTOME, KEGG, PANTH, PID, BIOCYC, WikiPathways, H, C1, C2, C3, C4, C6, C7, or C8. Leave blank only when providing custom pathways alone.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "H"
+    },
+    {
+      "id": "select_by_rank",
+      "category": "selection",
+      "name": "Select By Rank",
+      "param_name": "select_by_rank",
+      "description": "FALSE selects genes by significance and fold-change thresholds. TRUE uses the legacy t-statistic rank method.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "False",
+      "extra_data": []
+    },
+    {
+      "id": "select_top_percentage_of_genes",
+      "category": "selection",
+      "name": "Select Top Percentage of Genes",
+      "param_name": "select_top_percentage_of_genes",
+      "description": "With rank selection, use the top and bottom 10 percent rather than a fixed gene count.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "True",
+      "extra_data": []
+    },
+    {
+      "id": "select_top_genes",
+      "category": "selection",
+      "name": "Number of Top Genes",
+      "param_name": "select_top_genes",
+      "description": "With rank selection and percentage selection disabled, select this many genes from each end of each ranking.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "500",
+      "minimum": 1
+    },
+    {
+      "id": "significance_threshold",
+      "category": "selection",
+      "name": "Gene Significance Threshold",
+      "param_name": "significance_threshold",
+      "description": "Maximum nominal p-value, or threshold applied to explicitly selected adjusted-p-value columns, for DEG selection.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "0.05",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "fold_change_threshold",
+      "category": "selection",
+      "name": "Fold Change Threshold",
+      "param_name": "fold_change_threshold",
+      "description": "Minimum absolute linear fold change for DEG selection. Log-fold-change columns use the corresponding log2 threshold.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "1.2",
+      "minimum": 0
+    },
+    {
+      "id": "minimum_number_of_deg_genes",
+      "category": "selection",
+      "name": "Minimum DEG Genes",
+      "param_name": "minimum_number_of_deg_genes",
+      "description": "Desired minimum selected-gene count per comparison and direction before a warning is reported.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "100",
+      "minimum": 0
+    },
+    {
+      "id": "number_of_significant_events",
+      "category": "pathways",
+      "name": "Minimum Significant Comparisons",
+      "param_name": "number_of_significant_events",
+      "description": "Number of distinct comparisons in which a pathway must meet export criteria.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "1",
+      "minimum": 1
+    },
+    {
+      "id": "pathway_bubble_plots",
+      "category": "plots",
+      "name": "Write Shared Bubble Plots",
+      "param_name": "pathway_bubble_plots",
+      "description": "Write standardized OMIX combined and collection-specific pathway bubble plots plus a manifest.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "True",
+      "extra_data": []
+    },
+    {
+      "id": "pathway_bubble_top_n",
+      "category": "plots",
+      "name": "Top Pathways per Plot",
+      "param_name": "pathway_bubble_top_n",
+      "description": "Top significant pathways selected independently for each plot scope. Enter 0 to include all eligible pathways.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "20",
+      "minimum": 0
+    },
+    {
+      "id": "pathway_bubble_significance_statistic",
+      "category": "plots",
+      "name": "Bubble Plot Significance Statistic",
+      "param_name": "pathway_bubble_significance_statistic",
+      "description": "Use adjusted p-value/FDR (padj) or nominal p-value (pval) for shared-plot selection and significance shapes.",
+      "type": "list",
+      "value_type": "string",
+      "default_value": "padj",
+      "extra_data": ["padj", "pval"]
+    },
+    {
+      "id": "collection_color_scale",
+      "category": "plots",
+      "name": "Collection Color Scale",
+      "param_name": "collection_color_scale",
+      "description": "Use independent score ranges for collection-specific plots or one shared range across collections.",
+      "type": "list",
+      "value_type": "string",
+      "default_value": "independent",
+      "extra_data": ["independent", "shared"]
+    },
+    {
+      "id": "use_built_in_gene_universe",
+      "category": "advanced",
+      "name": "Use Built-in Gene Universe",
+      "param_name": "use_built_in_gene_universe",
+      "description": "Use the L2P built-in universe instead of all genes detected in the DEG table.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "False",
+      "extra_data": []
+    },
+    {
+      "id": "minimum_pathway_hit_count",
+      "category": "pathways",
+      "name": "Minimum Pathway Hits",
+      "param_name": "minimum_pathway_hit_count",
+      "description": "Pathways must have more than this many selected-gene hits to meet export criteria.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "5",
+      "minimum": 0
+    },
+    {
+      "id": "pathway_size_limit",
+      "category": "advanced",
+      "name": "Pathway Size Limit",
+      "param_name": "pathway_size_limit",
+      "description": "Remove pathways whose tested size is not below this limit.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "500",
+      "minimum": 1
+    },
+    {
+      "id": "p_value_limit",
+      "category": "pathways",
+      "name": "Pathway Significance Threshold",
+      "param_name": "p_value_limit",
+      "description": "Nominal p-value or FDR threshold used to retain exported pathways.",
+      "type": "text",
+      "value_type": "number",
+      "default_value": "0.05",
+      "minimum": 0,
+      "maximum": 1
+    },
+    {
+      "id": "use_fdr_for_significance",
+      "category": "advanced",
+      "name": "Use FDR for Export Significance",
+      "param_name": "use_fdr_for_significance",
+      "description": "Apply the pathway significance threshold to L2P FDR instead of nominal p-value.",
+      "type": "list",
+      "value_type": "boolean",
+      "default_value": "False",
+      "extra_data": []
+    },
+    {
+      "id": "custom_pathway_name_column",
+      "category": "custom",
+      "name": "Custom Pathway Name Column",
+      "param_name": "custom_pathway_name_column",
+      "description": "Pathway-name column in a tabular custom pathway database.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "gene_set_name"
+    },
+    {
+      "id": "custom_pathway_gene_column",
+      "category": "custom",
+      "name": "Custom Pathway Gene Column",
+      "param_name": "custom_pathway_gene_column",
+      "description": "Gene-symbol column in a tabular custom pathway database.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "gene_symbol"
+    },
+    {
+      "id": "pathways_to_remove",
+      "category": "advanced",
+      "name": "Pathways to Remove",
+      "param_name": "pathways_to_remove",
+      "description": "Optional comma-separated exact pathway names to remove from exported results and shared plots.",
+      "type": "text",
+      "value_type": "string"
+    }
+  ]
 }

@@ -50,7 +50,7 @@ stopifnot(identical(
 
 second_deg <- file.path(workflow_dir, "additional_DEG.csv")
 write.csv(data.frame(x = 1), second_deg, row.names = FALSE)
-expect_error(find_workflow_csv(fixture), "Multiple workflow DEG CSV files")
+expect_error(find_workflow_csv(fixture), "Multiple workflow DEG CSV candidates")
 unlink(second_deg)
 unlink(deg_path)
 
@@ -59,6 +59,35 @@ saveRDS(list(placeholder = TRUE), moo_path)
 stopifnot(identical(normalizePath(find_workflow_moo_rds(fixture)), normalizePath(moo_path)))
 dir.create(file.path(fixture, "second"))
 saveRDS(list(placeholder = TRUE), file.path(fixture, "second", "moo-diff.rds"))
-expect_error(find_workflow_moo_rds(fixture), "Multiple workflow moo-diff.rds files")
+expect_error(find_workflow_moo_rds(fixture), "Multiple workflow moo-diff.rds candidates")
+
+attached_dir <- file.path(fixture, "attached")
+dir.create(attached_dir)
+attached_csv <- file.path(attached_dir, "table.csv")
+write.csv(deg_table, attached_csv, row.names = FALSE)
+stopifnot(identical(
+  normalizePath(find_attached_deg_table(attached_dir)),
+  normalizePath(attached_csv)
+))
+write.csv(deg_table, file.path(attached_dir, "second.tsv"), row.names = FALSE)
+expect_error(find_attached_deg_table(attached_dir), "Multiple attached DEG table candidates")
+
+filtered_one <- file.path(fixture, "filtered-one")
+filtered_two <- file.path(fixture, "filtered-two")
+dir.create(filtered_one)
+dir.create(filtered_two)
+write.csv(deg_table, file.path(filtered_one, "diff_filt.csv"), row.names = FALSE)
+stopifnot(grepl("filtered-one", find_filtered_deg_file(fixture), fixed = TRUE))
+write.csv(deg_table, file.path(filtered_two, "diff_filt.csv"), row.names = FALSE)
+expect_error(find_filtered_deg_file(fixture), "Multiple Filtered DEG diff_filt.csv candidates")
+
+comparison_one <- file.path(fixture, "comparison-one")
+comparison_two <- file.path(fixture, "comparison-two")
+dir.create(comparison_one)
+dir.create(comparison_two)
+write.csv(deg_table, file.path(comparison_one, "diff_B-A.csv"), row.names = FALSE)
+stopifnot(grepl("comparison-one", find_comparison_deg_file("B-A", comparison_one), fixed = TRUE))
+write.csv(deg_table, file.path(comparison_two, "diff_B-A.csv"), row.names = FALSE)
+expect_error(find_comparison_deg_file("B-A", fixture), "Multiple All DEG file for comparison 'B-A' candidates")
 
 message("L2P Multi workflow-input checks passed")

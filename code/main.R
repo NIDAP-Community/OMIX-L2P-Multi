@@ -63,22 +63,27 @@ log_time("Loaded L2P Multi function")
 library(optparse)
 log_time("Loaded optparse library")
 
-# Define command-line options (matching L2P Multi parameters)
+# Define the canonical L2P Multi controls plus three released adapter aliases.
+# Internal legacy-renderer controls remain accepted by the CLI for saved runs,
+# but the App Panel exposes only canonical public and advanced controls.
 option_list <- list(
-  # Data input (upload takes priority over data asset)
+  make_option(
+    "--deg_table",
+    type = "character",
+    help = "Explicit DEG table path (CSV, TSV, TXT, or RDS)"
+  ),
   make_option(
     "--deg_file",
     type = "character",
     default = NULL,
-    help = "Upload DEG file (CSV, TSV, or RDS)"
+    help = "Deprecated alias for --deg_table; legacy Table/Filtered DEG/All DEG modes remain accepted"
   ),
   make_option(
     "--gene_names_column",
     type = "character",
+    default = NULL,
     help = "Column containing gene names"
   ),
-
-  # Comparison columns
   make_option(
     "--comparisons",
     type = "character",
@@ -104,11 +109,10 @@ option_list <- list(
     help = "Comma-separated fold change column names"
   ),
 
-  # Analysis parameters
   make_option(
     "--species",
     type = "character",
-    default = "Mouse",
+    default = "Human",
     help = "Species [default %default]"
   ),
   make_option(
@@ -120,7 +124,7 @@ option_list <- list(
   make_option(
     "--collections_to_include",
     type = "character",
-    default = NULL,
+    default = "H",
     help = "Comma-separated collections (GO,REACTOME,KEGG,H,C1-C8) [default H]"
   ),
   make_option(
@@ -138,7 +142,7 @@ option_list <- list(
   make_option(
     "--select_top_percentage_of_genes",
     type = "logical",
-    default = NULL,
+    default = TRUE,
     help = "Select top percentage of genes [default TRUE]"
   ),
   make_option(
@@ -172,7 +176,6 @@ option_list <- list(
     help = "Minimum DEG genes per comparison [default %default]"
   ),
 
-  # Plot parameters
   make_option(
     "--top_pathways",
     type = "integer",
@@ -240,19 +243,6 @@ option_list <- list(
     help = "Pathway label font size [default %default]"
   ),
 
-  # Output parameters
-  make_option(
-    "--output_plot",
-    type = "character",
-    default = "/results/l2p_multi_plot.png",
-    help = "Output plot file path [default %default]"
-  ),
-  make_option(
-    "--output_results",
-    type = "character",
-    default = "/results/l2p_multi_results.csv",
-    help = "Output results file path [default %default]"
-  ),
   make_option(
     "--plot_width",
     type = "integer",
@@ -266,7 +256,6 @@ option_list <- list(
     help = "Plot height in inches [default %default]"
   ),
 
-  # Advanced parameters
   make_option(
     "--custom_pathways",
     type = "character",
@@ -364,7 +353,6 @@ option_list <- list(
     help = "Spacing between comparison columns [default %default]"
   ),
 
-  # Axis labeling
   make_option(
     "--x_axis_title",
     type = "character",
@@ -439,14 +427,27 @@ opt$collections_to_include <- resolve_compatibility_alias(
   opt[["collections"]],
   "H",
   "collections_to_include",
-  "collections"
+  "collections",
+  option_was_supplied(filtered_args, "collections_to_include"),
+  option_was_supplied(filtered_args, "collections")
 )
 opt$select_top_percentage_of_genes <- resolve_compatibility_alias(
   opt[["select_top_percentage_of_genes"]],
   opt[["select_top_percentage"]],
   TRUE,
   "select_top_percentage_of_genes",
-  "select_top_percentage"
+  "select_top_percentage",
+  option_was_supplied(filtered_args, "select_top_percentage_of_genes"),
+  option_was_supplied(filtered_args, "select_top_percentage")
+)
+opt$deg_table <- resolve_compatibility_alias(
+  opt[["deg_table"]],
+  opt[["deg_file"]],
+  NULL,
+  "deg_table",
+  "deg_file",
+  option_was_supplied(filtered_args, "deg_table"),
+  option_was_supplied(filtered_args, "deg_file")
 )
 
 if (!opt$collection_color_scale %in% c("independent", "shared")) {
@@ -495,15 +496,16 @@ write_pathway_bubble_outputs <- function(
   )
 }
 
-# Load input data: uploaded file > data asset (priority-based loading)
+# Load input data. An explicit canonical path always wins; otherwise the
+# adapter performs deterministic attached-input discovery.
 log_time("Starting data loading")
 
 deg_table <- NULL
 input_file_path <- NULL
 
-# Priority 1: Check for uploaded file
-if (!is.null(opt$deg_file) && opt$deg_file != "" && file.exists(opt$deg_file)) {
-  input_file_path <- opt$deg_file
+# Priority 1: explicit canonical path (or its released --deg_file alias).
+if (!is.null(opt$deg_table) && opt$deg_table != "" && file.exists(opt$deg_table)) {
+  input_file_path <- opt$deg_table
   cat(sprintf("Loading DEG table from uploaded file: %s\n", input_file_path))
   
   if (grepl("\\.rds$", input_file_path, ignore.case = TRUE)) {
@@ -511,9 +513,11 @@ if (!is.null(opt$deg_file) && opt$deg_file != "" && file.exists(opt$deg_file)) {
     # If RDS contains a list, extract the data frame
     if (is.list(deg_table) && !is.data.frame(deg_table)) {
       df_elements <- sapply(deg_table, is.data.frame)
-      if (any(df_elements)) {
+      if (sum(df_elements) == 1L) {
         deg_table <- deg_table[[which(df_elements)[1]]]
         cat("Extracted data frame from list\n")
+      } else if (sum(df_elements) > 1L) {
+        stop("ERROR: RDS file contains multiple data frames; provide the intended table explicitly.")
       } else {
         stop("ERROR: RDS file does not contain a data frame")
       }
@@ -570,9 +574,14 @@ load_rds_as_df <- function(path) {
   if (is.data.frame(obj)) return(obj)
   if (is.list(obj)) {
     df_idx <- which(sapply(obj, is.data.frame))
-    if (length(df_idx) > 0) {
+    if (length(df_idx) == 1L) {
       cat("  Extracted data frame from list element\n")
       return(obj[[df_idx[1]]])
+    } else if (length(df_idx) > 1L) {
+      stop(sprintf(
+        "ERROR: RDS file '%s' contains multiple data frames; select or export the intended table.",
+        path
+      ))
     }
   }
   stop(sprintf("ERROR: RDS file '%s' does not contain a data frame.", path))
@@ -631,24 +640,6 @@ resolve_gene_names_column <- function(df, requested = NULL) {
   detected[[1L]]
 }
 
-# Find diff_filt.csv anywhere under base_dir ("Filtered DEG" mode)
-find_filtered_deg_file <- function(base_dir) {
-  all_csv   <- list.files(base_dir, pattern = "\\.csv$", full.names = TRUE,
-                          recursive = TRUE, ignore.case = TRUE)
-  filt_files <- all_csv[tolower(basename(all_csv)) == "diff_filt.csv"]
-  if (length(filt_files) == 0) {
-    stop(paste0(
-      "ERROR: 'Filtered DEG' mode: no 'diff_filt.csv' found under /data/deg_table/.\n",
-      "  Ensure the moo-properties asset is attached and contains analyses/diff_filt.csv."
-    ))
-  }
-  if (length(filt_files) > 1) {
-    cat(sprintf("  Multiple diff_filt.csv found; using: %s\n", filt_files[1]))
-  }
-  cat(sprintf("  Found: %s\n", filt_files[1]))
-  filt_files[1]
-}
-
 # Load diff_{comparison}.csv for every comparison, rename tstat/sig/fc columns
 # with a <comparison>_ prefix, and merge all tables on gene_col ("All DEG" mode).
 # Also updates opt$t_statistic_columns, opt$significance_columns, opt$fold_change_columns
@@ -659,44 +650,10 @@ merge_comparison_files <- function(base_dir, comparisons_vec, gene_col,
     "  Merging %d per-comparison file(s) joined on '%s'...\n",
     length(comparisons_vec), gene_col
   ))
-  all_csv <- list.files(base_dir, pattern = "\\.csv$", full.names = TRUE,
-                        recursive = TRUE, ignore.case = TRUE)
   merged <- NULL
 
   for (comp in comparisons_vec) {
-    target <- tolower(paste0("diff_", comp, ".csv"))
-    matches <- all_csv[tolower(basename(all_csv)) == target]
-
-    if (length(matches) == 0) {
-      # Scan for available diff_*.csv files and extract contrast names for guidance
-      available_diff <- all_csv[grepl("^diff_.*\\.csv$", tolower(basename(all_csv)))]
-      available_contrasts <- sub("^diff_", "", sub("\\.csv$", "", basename(available_diff),
-                                                   ignore.case = TRUE), ignore.case = TRUE)
-      cat(sprintf(
-        "\n=== ERROR: File not found for comparison '%s' ===\n", comp
-      ))
-      cat(sprintf("  Expected file: diff_%s.csv\n", comp))
-      cat(sprintf("  You specified: Comparisons = '%s'\n",
-                  paste(comparisons_vec, collapse = ", ")))
-      if (length(available_contrasts) > 0) {
-        cat("\n  Available contrasts in the dataset (based on diff_*.csv filenames):\n")
-        for (ac in sort(available_contrasts)) {
-          cat(sprintf("    - %s\n", ac))
-        }
-        cat("\n  Tip: Update the 'Comparisons' parameter to match one or more of the above.\n")
-      } else {
-        cat("  No diff_*.csv files found in the dataset at all.\n")
-        cat("  Ensure the attached asset is a MOSuite moo-properties output with an analyses/diff/ folder.\n")
-      }
-      cat("\n")
-      stop(sprintf(
-        "File 'diff_%s.csv' not found. Check the Comparisons parameter. Available: %s",
-        comp,
-        if (length(available_contrasts) > 0) paste(sort(available_contrasts), collapse = ", ") else "none"
-      ))
-    }
-    path <- matches[1]
-    if (length(matches) > 1) cat(sprintf("  [%s] Multiple matches; using: %s\n", comp, path))
+    path <- find_comparison_deg_file(comp, base_dir)
     cat(sprintf("  [%s] Loading: %s\n", comp, path))
 
     df <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
@@ -733,10 +690,23 @@ merge_comparison_files <- function(base_dir, comparisons_vec, gene_col,
 
 source("functions/workflow_input.R")
 
+# Older saved Code Ocean runs used --deg_file as a mode selector. Keep those
+# values working, but use the canonical --deg_table path for all new runs.
+deg_input_mode <- ""
+if (!is.null(opt$deg_table) && nchar(trimws(opt$deg_table)) > 0) {
+  candidate <- trimws(opt$deg_table)
+  if (tolower(candidate) %in% c("filtered deg", "all deg", "table")) {
+    deg_input_mode <- tolower(candidate)
+    cat(sprintf("Legacy DEG input mode: '%s'\n", candidate))
+  } else if (!file.exists(candidate)) {
+    stop("ERROR: Explicit DEG table does not exist: ", candidate)
+  }
+}
+
 # Priority 2: use the durable wide DEG CSV from an upstream Code Ocean
 # workflow. This takes precedence over legacy attached-data modes such as
 # "All DEG", whose value is an App Panel mode rather than a file path.
-if (is.null(deg_table)) {
+if (is.null(deg_table) && !nzchar(deg_input_mode)) {
   workflow_csv_path <- find_workflow_csv()
   workflow_moo_rds_path <- if (is.null(workflow_csv_path)) find_workflow_moo_rds() else NULL
 
@@ -772,37 +742,12 @@ if (is.null(deg_table)) {
 }
 
 if (is.null(deg_table)) {
-  # Detect explicit keyword in DEG Table File (only if it is NOT a real file path)
-  deg_input_mode <- ""
-  if (!is.null(opt$deg_file) && nchar(trimws(opt$deg_file)) > 0) {
-    candidate <- trimws(opt$deg_file)
-    if (tolower(candidate) %in% c("filtered deg", "all deg", "table")) {
-      deg_input_mode <- tolower(candidate)
-      cat(sprintf("DEG Table File mode: '%s'\n", candidate))
-    }
-  }
-
-  # Scans used by blank (demo) auto-detect mode — /data/deg_table/
-  csv_files <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$",
-                          full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  rds_files  <- list.files("/data/deg_table", pattern = "\\.rds$",
-                           full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  if (nchar(deg_input_mode) == 0) {
-    # Only show auto-detect header and file count for blank (demo) mode
-    cat("Auto-detecting DEG table in /data/deg_table/ (demo data)...\n")
-    cat(sprintf("  Found %d flat file(s) [CSV/TSV/TXT] and %d RDS file(s)\n",
-                length(csv_files), length(rds_files)))
-  }
-
-  # ── "Filtered DEG": load diff_filt.csv ─────────────────────────────────────
   if (deg_input_mode == "filtered deg") {
     cat("  Mode: Filtered DEG — searching for diff_filt.csv under /data/\n")
     input_file_path <- find_filtered_deg_file("/data")
-    deg_table       <- load_flat_file(input_file_path)
+    deg_table <- load_flat_file(input_file_path)
     warn_gene_duplicates(deg_table, opt$gene_names_column, "diff_filt.csv")
     log_time("Loaded diff_filt.csv (Filtered DEG mode)")
-
-  # ── "All DEG": load & merge per-comparison files ─────────────────────────────
   } else if (deg_input_mode == "all deg") {
     cat("  Mode: All DEG — loading and merging per-comparison files from /data/\n")
     if (is.null(opt$comparisons) || nchar(trimws(opt$comparisons)) == 0) {
@@ -813,15 +758,10 @@ if (is.null(deg_table)) {
     sig_col   <- first_or_default(opt$significance_columns, "pval")
     fc_col    <- first_or_default(opt$fold_change_columns,  "FC")
     if (is.null(opt$gene_names_column) || !nzchar(trimws(opt$gene_names_column))) {
-      all_csv <- list.files("/data", pattern = "\\.csv$", full.names = TRUE,
-                            recursive = TRUE, ignore.case = TRUE)
-      first_target <- tolower(paste0("diff_", comparisons_vec[[1L]], ".csv"))
-      first_match <- all_csv[tolower(basename(all_csv)) == first_target]
-      if (length(first_match) > 0L) {
-        opt$gene_names_column <- resolve_gene_names_column(
-          read.csv(first_match[[1L]], stringsAsFactors = FALSE, check.names = FALSE)
-        )
-      }
+      first_match <- find_comparison_deg_file(comparisons_vec[[1L]], "/data")
+      opt$gene_names_column <- resolve_gene_names_column(
+        read.csv(first_match, stringsAsFactors = FALSE, check.names = FALSE)
+      )
     }
     cat(sprintf(
       "  Per-file column names: gene='%s'  tstat='%s'  sig='%s'  fc='%s'\n",
@@ -846,153 +786,16 @@ if (is.null(deg_table)) {
     cat(sprintf("  Updated Significance Columns → %s\n", opt$significance_columns))
     cat(sprintf("  Updated Fold Change Columns  → %s\n", opt$fold_change_columns))
     log_time("Loaded and merged per-comparison files (All DEG mode)")
-
-  # ── "Table": auto-detect flat file / RDS from /data/deg_table/ ───────────────
-  } else if (deg_input_mode == "table") {
-    cat("  Mode: Table — auto-detecting flat DEG table in /data/deg_table/\n")
-    input_csv <- list.files("/data/deg_table", pattern = "\\.(csv|tsv|txt)$",
-                            full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    input_rds  <- list.files("/data/deg_table", pattern = "\\.rds$",
-                             full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    cat(sprintf("  Found %d flat file(s) and %d RDS file(s) in /data/deg_table/\n",
-                length(input_csv), length(input_rds)))
-
-    if (length(input_csv) == 1) {
-      input_file_path <- input_csv[1]
-      cat(sprintf("  Single flat file — loading: %s\n", input_file_path))
-      deg_table <- load_flat_file(input_file_path)
-      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-      log_time("Loaded flat file from /data/input/ (Table mode)")
-
-    } else if (length(input_csv) > 1) {
-      # Score by comparison IDs if set
-      comparisons_vec_t <- if (!is.null(opt$comparisons) && nchar(trimws(opt$comparisons)) > 0)
-        trimws(unlist(strsplit(opt$comparisons, ","))) else character(0)
-      if (length(comparisons_vec_t) > 0) {
-        scores_t <- sapply(input_csv, function(f) {
-          sum(sapply(comparisons_vec_t, function(cmp) grepl(cmp, f, fixed = TRUE)))
-        })
-        best_t <- max(scores_t)
-        input_file_path <- if (best_t > 0) input_csv[scores_t == best_t][1] else input_csv[1]
-        cat(sprintf("  Selected: %s\n", input_file_path))
-      } else {
-        input_file_path <- input_csv[1]
-        cat(sprintf("  Multiple flat files; using first: %s\n", input_file_path))
-      }
-      deg_table <- load_flat_file(input_file_path)
-      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-      log_time("Loaded flat file from /data/input/ (Table mode)")
-
-    } else if (length(input_rds) == 1) {
-      input_file_path <- input_rds[1]
-      cat(sprintf("  Single RDS file — loading: %s\n", input_file_path))
-      deg_table <- load_rds_as_df(input_file_path)
-      warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-      log_time("Loaded RDS file from /data/input/ (Table mode)")
-
-    } else {
-      cat("\n=== ERROR: No DEG table found in /data/deg_table/ (Table mode) ===\n")
-      cat("  Attach your DEG table (CSV/TSV/RDS) as a dataset with mount name 'deg_table'.\n\n")
-      stop("No DEG table found in /data/deg_table/. Attach a dataset with mount name 'deg_table'.")
-    }
-
-  # ── Auto Case 1: single flat file in /data/deg_table/ ────────────────────────
-  } else if (length(csv_files) == 1) {
-    input_file_path <- csv_files[1]
-    cat(sprintf("  Single flat file detected — loading: %s\n", input_file_path))
-    deg_table <- load_flat_file(input_file_path)
-    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-    log_time("Loaded single flat file from data asset")
-
-  # ── Auto Case 2: multiple flat files — score by comparison IDs ───────────────
-  } else if (length(csv_files) > 1) {
-    comparisons_vec_local <- character(0)
-    if (!is.null(opt$comparisons) && nchar(trimws(opt$comparisons)) > 0) {
-      comparisons_vec_local <- trimws(unlist(strsplit(opt$comparisons, ",")))
-    }
-
-    if (length(comparisons_vec_local) > 0) {
-      scores    <- sapply(csv_files, function(f) {
-        sum(sapply(comparisons_vec_local, function(cmp) grepl(cmp, f, fixed = TRUE)))
-      })
-      best_score <- max(scores)
-      if (best_score > 0) {
-        matched         <- csv_files[scores == best_score]
-        input_file_path <- matched[1]
-        cat(sprintf(
-          "  Comparison-matched file (%d/%d IDs in path): %s\n",
-          best_score, length(comparisons_vec_local), input_file_path
-        ))
-        if (length(matched) > 1)
-          cat(sprintf(
-            "  (%d files tied; using first. Set 'DEG Table File' to select explicitly.)\n",
-            length(matched)
-          ))
-      } else {
-        input_file_path <- csv_files[1]
-        cat(sprintf("  No comparison-matched file; using first: %s\n", input_file_path))
-        cat("  Tip: use 'Table', 'Filtered DEG', or 'All DEG' for user-supplied data.\n")
-      }
-    } else {
-      input_file_path <- csv_files[1]
-      cat(sprintf("  Multiple flat files; using first: %s\n", input_file_path))
-      cat("  Tip: set 'DEG Table File' to 'Table', 'Filtered DEG', or 'All DEG' for user data.\n")
-    }
-    deg_table <- load_flat_file(input_file_path)
-    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-    log_time("Loaded flat file from data asset (multi-file asset)")
-
-  # ── Auto Case 3: no flat files, single RDS ───────────────────────────────────
-  } else if (length(rds_files) == 1) {
-    input_file_path <- rds_files[1]
-    cat(sprintf("  Single RDS file detected — loading: %s\n", input_file_path))
-    deg_table <- load_rds_as_df(input_file_path)
-    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-    log_time("Loaded single RDS file from data asset")
-
-  # ── Auto Case 4: no flat files, multiple RDS ─────────────────────────────────
-  } else if (length(rds_files) > 1) {
-    input_file_path <- rds_files[1]
-    cat(sprintf("  Multiple RDS files; using first: %s\n", input_file_path))
-    cat("  Tip: set 'DEG Table File' to select a specific file.\n")
-    deg_table <- load_rds_as_df(input_file_path)
-    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
-    log_time("Loaded RDS file from data asset (multi-file asset)")
-
-  # ── Case 5: nothing found in /data/deg_table/ — scan broadly ────────────────
   } else {
-    all_files <- list.files("/data/deg_table", full.names = TRUE,
-                            recursive = TRUE, all.files = FALSE)
-    cat("\n=== ERROR: No DEG table found in /data/deg_table/ ===\n")
-
-    if (length(all_files) == 0) {
-      cat("  The mount /data/deg_table/ appears to be empty.\n")
+    cat("Auto-detecting exactly one DEG table under /data/deg_table/.\n")
+    input_file_path <- find_attached_deg_table("/data/deg_table", required = TRUE)
+    deg_table <- if (grepl("\\.rds$", input_file_path, ignore.case = TRUE)) {
+      load_rds_as_df(input_file_path)
     } else {
-      cat(sprintf("  Found %d file(s) but none are flat tables or RDS.\n",
-                  length(all_files)))
+      load_flat_file(input_file_path)
     }
-
-    # Also check /data/input/ to guide users who attached to the wrong mount
-    input_files <- list.files("/data/input", full.names = TRUE,
-                              recursive = TRUE, all.files = FALSE)
-    if (length(input_files) > 0) {
-      cat(sprintf("\n  Note: /data/input/ has %d file(s).\n", length(input_files)))
-      diff_f <- input_files[grepl("^diff_.*\\.csv$", tolower(basename(input_files)))]
-      filt_f <- input_files[tolower(basename(input_files)) == "diff_filt.csv"]
-      if (length(diff_f) > 0 || length(filt_f) > 0) {
-        cat("  A MOSuite moo-properties asset is attached at /data/input/.\n")
-        cat("  Set 'DEG Table File' to 'Filtered DEG' or 'All DEG' to use it.\n")
-      } else {
-        cat("  A data asset is attached at /data/input/. Set 'DEG Table File' to 'Table'.\n")
-      }
-    } else {
-      cat("\n  To provide data:\n")
-      cat("    blank       — attach a flat DEG table with mount name 'deg_table'\n")
-      cat("    'Table'     — attach a flat DEG table with mount name 'input'\n")
-      cat("    'All DEG' / 'Filtered DEG' — attach a MOSuite moo-properties asset with mount name 'input'\n")
-    }
-    cat("\n")
-    stop("No DEG table found. Check the attached dataset and 'DEG Table File' mode.")
+    warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
+    log_time("Loaded unambiguous attached DEG table")
   }
 }
 
@@ -1006,7 +809,7 @@ cat("\n")
 cat("=== DEG Table Input ===\n")
 if (exists("input_file_path") && !is.null(input_file_path) && nchar(input_file_path) > 0) {
   cat(sprintf("  File   : %s\n", input_file_path))
-} else if (!is.null(opt$deg_file) && tolower(trimws(opt$deg_file)) == "all deg") {
+} else if (!is.null(opt$deg_table) && tolower(trimws(opt$deg_table)) == "all deg") {
   cat(sprintf("  Mode   : All DEG (merged per-comparison files)\n"))
 }
 cat(sprintf("  Rows   : %d\n", nrow(deg_table)))
@@ -1272,6 +1075,16 @@ custom_pathways_param <- load_custom_pathways(
   opt$custom_pathway_name_column,
   opt$custom_pathway_gene_column
 )
+
+# Result paths are deployment-managed rather than user-settable scientific
+# controls. Code Ocean provides /results; OMIX_RESULTS_DIR supports local
+# adapter validation without changing the named-parameter contract.
+deployment_output_dir <- Sys.getenv("OMIX_RESULTS_DIR", unset = "/results")
+if (!dir.exists(deployment_output_dir) &&
+    !dir.create(deployment_output_dir, recursive = TRUE, showWarnings = FALSE)) {
+  stop("ERROR: Could not create deployment result directory: ", deployment_output_dir)
+}
+output_results_file <- file.path(deployment_output_dir, "l2p_multi_results.csv")
 pathways_to_remove_vec <- if (
   !is.null(opt$pathways_to_remove) && opt$pathways_to_remove != ""
 ) {
@@ -1315,12 +1128,12 @@ y_axis_tick_labels_vec <- if (
   NULL
 }
 x_axis_title_value <- parse_axis_title(
-  opt$x_axis_title,
+  opt[["x_axis_title"]],
   opt$x_axis_title_font_size,
   "x_axis_title"
 )
 y_axis_title_value <- parse_axis_title(
-  opt$y_axis_title,
+  opt[["y_axis_title"]],
   opt$y_axis_title_font_size,
   "y_axis_title"
 )
@@ -1374,13 +1187,13 @@ results <- l2p_multi(
   export_plot_width = opt$plot_width,
   export_plot_height = opt$plot_height,
   column_spacing = opt$column_spacing,
-  export_results_file = opt$output_results
+  export_results_file = output_results_file
 )
 
 if (isTRUE(opt$pathway_bubble_plots)) {
   bubble_outputs <- write_pathway_bubble_outputs(
     results = results,
-    output_dir = dirname(opt$output_results),
+    output_dir = deployment_output_dir,
     top_n_pathways = opt$pathway_bubble_top_n,
     collection_color_scale = opt$collection_color_scale,
     significance_statistic = opt$pathway_bubble_significance_statistic,
@@ -1393,9 +1206,9 @@ if (isTRUE(opt$pathway_bubble_plots)) {
 log_time("L2P Multi analysis completed")
 
 cat("\n=== L2P Multi Analysis completed successfully! ===\n")
-cat(sprintf("Results saved to: %s\n", opt$output_results))
+cat(sprintf("Results saved to: %s\n", output_results_file))
 if (isTRUE(opt$pathway_bubble_plots)) {
-  cat(sprintf("Shared pathway-bubble plots saved under: %s\n", dirname(opt$output_results)))
+  cat(sprintf("Shared pathway-bubble plots saved under: %s\n", deployment_output_dir))
 }
 cat("\n")
 

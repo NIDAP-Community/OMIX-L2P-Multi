@@ -14,8 +14,18 @@ stopifnot(
     suppressWarnings(resolve_compatibility_alias(NULL, "REACTOME", "H", "canonical", "old")),
     "REACTOME"
   ),
+  identical(
+    suppressWarnings(resolve_compatibility_alias(
+      "H", "REACTOME", "H", "canonical", "old",
+      canonical_supplied = FALSE, alias_supplied = TRUE
+    )),
+    "REACTOME"
+  ),
   identical(resolve_compatibility_alias(FALSE, NULL, TRUE, "canonical", "old"), FALSE),
-  identical(resolve_compatibility_alias(TRUE, TRUE, FALSE, "canonical", "old"), TRUE)
+  identical(resolve_compatibility_alias(TRUE, TRUE, FALSE, "canonical", "old"), TRUE),
+  isTRUE(option_was_supplied(c("--canonical", "x"), "canonical")),
+  isTRUE(option_was_supplied("--canonical=x", "canonical")),
+  !isTRUE(option_was_supplied(c("--other", "x"), "canonical"))
 )
 
 conflict <- tryCatch(
