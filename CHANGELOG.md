@@ -36,6 +36,10 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
+- Updated the managed scientific export to canonical OMIX L2P Multi `4.0.1`
+  at commit `258639195c8fd249364c0b65bdcc2ae6603ca64b`; returned and serialized
+  result rows now follow requested comparison order while retaining ascending
+  p-value order within each comparison.
 - Reorganized the App Panel into Main and Advanced categories containing only
   canonical public and advanced controls. The 23 internal, deprecated, and
   inactive legacy-renderer controls are no longer shown.

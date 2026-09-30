@@ -9,7 +9,7 @@ Before each run, record:
 
 - the exact merged adapter commit;
 - canonical OMIX source commit
-  `eee4433cd74d0ce9bd1daba1571ca6312cba7ea2`;
+  `258639195c8fd249364c0b65bdcc2ae6603ca64b`;
 - the Code Ocean capsule or release identifier;
 - runtime tag `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v1`; and
 - the immutable runtime digest resolved by the platform.
@@ -23,9 +23,10 @@ Before each run, record:
 2. **Explicit user table**
    - Select a compatible CSV with `DEG Table`.
    - Use at least two comparisons in a nonalphabetical requested order.
-   - Confirm analysis provenance and every rendered plot axis preserve the
-     requested order. The canonical CSV is significance-sorted and does not
-     encode factor levels, so first-row occurrence is not an order assertion.
+   - Confirm the returned and serialized result rows are grouped in the
+     requested order and ranked by ascending p-value within each comparison.
+   - Confirm analysis provenance and every rendered plot axis preserve that
+     same requested order.
 3. **Workflow result**
    - Connect one upstream wide DEG result with comparison-specific t-statistic,
      p-value, and fold-change columns.
@@ -43,7 +44,8 @@ Before each run, record:
 ## Required artifacts and assertions
 
 - `l2p_multi_results.csv` contains every pathway meeting the selected export
-  criteria; the figure row limit does not truncate it.
+  criteria; the figure row limit does not truncate it. Its comparison blocks
+  follow the requested order, with ascending p-values inside each block.
 - `l2p_multi_results_provenance.csv` is present.
 - Shared combined, faceted, and collection-specific
   `L2P-Multi-Pathway-Bubble_*.png` files and the manifest are present when

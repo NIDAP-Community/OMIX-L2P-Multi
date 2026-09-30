@@ -6,10 +6,10 @@
 
 - **Module:** [OMIX L2P Multi](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi)
 - **Canonical path:** `modules/OMIX-L2P-Multi/`
-- **Canonical module version:** `4.0.0`
+- **Canonical module version:** `4.0.1`
 - **Canonical interface version:** `1`
 - **Canonical release tag:** Pending — baseline tag not yet established.
-- **Canonical source reference:** [`eee4433cd74d0ce9bd1daba1571ca6312cba7ea2`](https://github.com/NIDAP-Community/OMIX/commit/eee4433cd74d0ce9bd1daba1571ca6312cba7ea2)
+- **Canonical source reference:** [`258639195c8fd249364c0b65bdcc2ae6603ca64b`](https://github.com/NIDAP-Community/OMIX/commit/258639195c8fd249364c0b65bdcc2ae6603ca64b)
 - **Interface schema:** [schemas/interface.yml](https://github.com/NIDAP-Community/OMIX/blob/main/modules/OMIX-L2P-Multi/schemas/interface.yml)
 - **Module contract:** [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md)
 
@@ -17,13 +17,18 @@
 
 | Canonical file | Adapter copy | SHA-256 | Purpose |
 | --- | --- | --- | --- |
-| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `7624817aaba08d7fa64e9253453fdbf6b45c2a56e83cfb16dc8444445659586c` | Multi-comparison L2P implementation. |
+| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `ff986b4ba0e25abd79388ecc1e79f8771381acd0ffb8461ead646b2a3a9e303a` | Multi-comparison L2P implementation. |
 
 The complete canonical `R/` tree contains the one file above. It was exported
 without modification and verified byte-for-byte at the canonical source
 reference. The completed canonical `schemas/interface.yml` used to build the
 adapter contract has SHA-256
 `b85d005e248e38731e89c939d6a974b87f84a6b89c77ebd90746122faeb7174c`.
+
+Canonical `4.0.1` groups returned and CSV-serialized result rows in the
+requested comparison order while retaining ascending p-value ranking within
+each comparison. The adapter does not post-process or independently reorder
+those scientific results.
 
 ## Platform translations and compatibility
 

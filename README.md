@@ -98,7 +98,7 @@ for exact types, allowed values, and semantics.
 The adapter writes stable artifacts under `/results`:
 
 - `l2p_multi_results.csv` — all pathways meeting export criteria, ordered by
-  canonical significance sorting rather than contrast-first occurrence;
+  requested comparison and then by ascending p-value within each comparison;
 - `l2p_multi_results_provenance.csv` — result provenance, including requested
   comparison order and aligned input columns;
 - `L2P-Multi-Pathway-Bubble_*.png` — standardized shared plots; and
