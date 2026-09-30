@@ -36,10 +36,12 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
-- Updated the managed scientific export to canonical OMIX L2P Multi `4.0.1`
-  at commit `258639195c8fd249364c0b65bdcc2ae6603ca64b`; returned and serialized
-  result rows now follow requested comparison order while retaining ascending
-  p-value order within each comparison.
+- Updated the managed scientific export to canonical OMIX L2P Multi `4.1.0`
+  at commit `53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`.
+  The App Panel and adapter CLI now expose shared suffix controls for ordered
+  rank, significance, and fold-change columns. Exact ordered column-list
+  overrides retain precedence, and result rows remain grouped in requested
+  comparison order with ascending p-value order within each comparison.
 - Reorganized the App Panel into Main and Advanced categories containing only
   canonical public and advanced controls. The 23 internal, deprecated, and
   inactive legacy-renderer controls are no longer shown.

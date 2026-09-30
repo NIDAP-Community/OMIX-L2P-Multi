@@ -41,6 +41,80 @@ stopifnot(
   identical(unname(columns$fold_change_columns), paste0(comparisons, "_FC"))
 )
 
+alternative_suffix_table <- data.frame(
+  GeneName = c("GeneA", "GeneB"),
+  check.names = FALSE
+)
+for (comparison in comparisons) {
+  alternative_suffix_table[[paste0(comparison, "_statistic")]] <- c(1, -1)
+  alternative_suffix_table[[paste0(comparison, "_adjpval")]] <- c(0.01, 0.02)
+  alternative_suffix_table[[paste0(comparison, "_logFC")]] <- c(1, -1)
+}
+alternative_columns <- resolve_workflow_multi_columns(
+  alternative_suffix_table,
+  comparisons,
+  t_statistic_suffix = "_statistic",
+  significance_suffix = "_adjpval",
+  fold_change_suffix = "_logFC"
+)
+stopifnot(
+  identical(
+    unname(alternative_columns$t_statistic_columns),
+    paste0(comparisons, "_statistic")
+  ),
+  identical(
+    unname(alternative_columns$significance_columns),
+    paste0(comparisons, "_adjpval")
+  ),
+  identical(
+    unname(alternative_columns$fold_change_columns),
+    paste0(comparisons, "_logFC")
+  )
+)
+
+expect_error(
+  resolve_workflow_multi_columns(
+    alternative_suffix_table,
+    comparisons,
+    t_statistic_suffix = "_statistic",
+    significance_suffix = "_missing_significance",
+    fold_change_suffix = "_logFC"
+  ),
+  "Workflow input lacks required column(s): significance_columns"
+)
+
+override_table <- alternative_suffix_table
+override_table$rank_one <- c(3, -3)
+override_table$rank_two <- c(4, -4)
+override_table$rank_three <- c(5, -5)
+override_table$sig_one <- c(0.01, 0.02)
+override_table$sig_two <- c(0.02, 0.03)
+override_table$sig_three <- c(0.03, 0.04)
+override_table$fc_one <- c(2, -2)
+override_table$fc_two <- c(3, -3)
+override_table$fc_three <- c(4, -4)
+override_columns <- resolve_workflow_multi_columns(
+  override_table,
+  comparisons,
+  t_statistic_columns = "rank_one,rank_two,rank_three",
+  significance_columns = "sig_one,sig_two,sig_three",
+  fold_change_columns = "fc_one,fc_two,fc_three",
+  t_statistic_suffix = "_unused_rank",
+  significance_suffix = "_unused_significance",
+  fold_change_suffix = "_unused_fold_change"
+)
+stopifnot(
+  identical(unname(override_columns$t_statistic_columns), c(
+    "rank_one", "rank_two", "rank_three"
+  )),
+  identical(unname(override_columns$significance_columns), c(
+    "sig_one", "sig_two", "sig_three"
+  )),
+  identical(unname(override_columns$fold_change_columns), c(
+    "fc_one", "fc_two", "fc_three"
+  ))
+)
+
 gene_symbols_table <- deg_table
 names(gene_symbols_table)[names(gene_symbols_table) == "GeneName"] <- "Gene Symbols"
 stopifnot(identical(

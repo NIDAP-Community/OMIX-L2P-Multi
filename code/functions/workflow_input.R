@@ -125,34 +125,101 @@ parse_workflow_comparisons <- function(comparisons) {
   trimws(strsplit(comparisons, ",", fixed = TRUE)[[1L]])
 }
 
-resolve_workflow_multi_columns <- function(df, comparisons) {
+parse_workflow_column_override <- function(
+    value,
+    label,
+    comparisons,
+    available_cols) {
+  if (is.null(value) || length(value) == 0L) return(NULL)
+  if (length(value) == 1L) {
+    value <- trimws(strsplit(as.character(value), ",", fixed = TRUE)[[1L]])
+  } else {
+    value <- trimws(as.character(value))
+  }
+  value <- value[nzchar(value)]
+  if (length(value) == 0L) return(NULL)
+  if (length(value) != length(comparisons)) {
+    stop(
+      "ERROR: ", label, " must contain one ordered column per comparison. ",
+      "Comparisons: ", paste(comparisons, collapse = ", ")
+    )
+  }
+  missing <- setdiff(value, available_cols)
+  if (length(missing) > 0L) {
+    stop(
+      "ERROR: ", label, " contains column(s) absent from the workflow table: ",
+      paste(missing, collapse = ", ")
+    )
+  }
+  value
+}
+
+resolve_workflow_multi_columns <- function(
+    df,
+    comparisons,
+    t_statistic_columns = NULL,
+    significance_columns = NULL,
+    fold_change_columns = NULL,
+    t_statistic_suffix = "_tstat",
+    significance_suffix = "_pval",
+    fold_change_suffix = "_FC") {
+  available_cols <- colnames(df)
+  exact_t_statistic_columns <- parse_workflow_column_override(
+    t_statistic_columns,
+    "T-Statistic Columns",
+    comparisons,
+    available_cols
+  )
+  exact_significance_columns <- parse_workflow_column_override(
+    significance_columns,
+    "Significance Columns",
+    comparisons,
+    available_cols
+  )
+  exact_fold_change_columns <- parse_workflow_column_override(
+    fold_change_columns,
+    "Fold Change Columns",
+    comparisons,
+    available_cols
+  )
+
   columns <- list(
     gene_names_column = first_existing_column(
       c("GeneName", "Gene Symbols", "Gene", "gene_name", "gene_symbol", "GeneSymbol"),
-      colnames(df)
+      available_cols
     ),
-    t_statistic_columns = vapply(
-      comparisons,
-      first_comparison_column,
-      character(1),
-      suffixes = c("_tstat", "_t.stat", "_t_stat", "_stat"),
-      available_cols = colnames(df)
-    ),
-    significance_columns = vapply(
-      comparisons,
-      first_comparison_column,
-      character(1),
-      suffixes = c("_pval", "_adjpval", "_padj", "_pvalue", "_p.value", "_FDR"),
-      available_cols = colnames(df)
-    ),
-    fold_change_columns = vapply(
-      comparisons,
-      first_comparison_column,
-      character(1),
-      suffixes = c("_FC", "_fc", "_FoldChange", "_logFC"),
-      available_cols = colnames(df)
-    )
+    t_statistic_columns = exact_t_statistic_columns,
+    significance_columns = exact_significance_columns,
+    fold_change_columns = exact_fold_change_columns
   )
+
+  if (is.null(columns$t_statistic_columns)) {
+    columns$t_statistic_columns <- vapply(
+      comparisons,
+      first_comparison_column,
+      character(1),
+      suffixes = t_statistic_suffix,
+      available_cols = available_cols
+    )
+  }
+  if (is.null(columns$significance_columns)) {
+    columns$significance_columns <- vapply(
+      comparisons,
+      first_comparison_column,
+      character(1),
+      suffixes = significance_suffix,
+      available_cols = available_cols
+    )
+  }
+  if (is.null(columns$fold_change_columns)) {
+    columns$fold_change_columns <- vapply(
+      comparisons,
+      first_comparison_column,
+      character(1),
+      suffixes = fold_change_suffix,
+      available_cols = available_cols
+    )
+  }
 
   missing <- c(
     if (is.null(columns$gene_names_column)) "gene_names_column",

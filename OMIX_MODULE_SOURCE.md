@@ -6,10 +6,10 @@
 
 - **Module:** [OMIX L2P Multi](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi)
 - **Canonical path:** `modules/OMIX-L2P-Multi/`
-- **Canonical module version:** `4.0.1`
+- **Canonical module version:** `4.1.0`
 - **Canonical interface version:** `1`
 - **Canonical release tag:** Pending — baseline tag not yet established.
-- **Canonical source reference:** [`258639195c8fd249364c0b65bdcc2ae6603ca64b`](https://github.com/NIDAP-Community/OMIX/commit/258639195c8fd249364c0b65bdcc2ae6603ca64b)
+- **Canonical source reference:** [`53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`](https://github.com/NIDAP-Community/OMIX/commit/53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f)
 - **Interface schema:** [schemas/interface.yml](https://github.com/NIDAP-Community/OMIX/blob/main/modules/OMIX-L2P-Multi/schemas/interface.yml)
 - **Module contract:** [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md)
 
@@ -17,18 +17,20 @@
 
 | Canonical file | Adapter copy | SHA-256 | Purpose |
 | --- | --- | --- | --- |
-| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `ff986b4ba0e25abd79388ecc1e79f8771381acd0ffb8461ead646b2a3a9e303a` | Multi-comparison L2P implementation. |
+| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `3e646757f19f0beaae78e6983f77545af25a38dc25b057612b350c7ac3251f45` | Multi-comparison L2P implementation. |
 
 The complete canonical `R/` tree contains the one file above. It was exported
 without modification and verified byte-for-byte at the canonical source
 reference. The completed canonical `schemas/interface.yml` used to build the
 adapter contract has SHA-256
-`b85d005e248e38731e89c939d6a974b87f84a6b89c77ebd90746122faeb7174c`.
+`5f25de92c72b582852f052b10c82ba501cde9283d0d44752dba205cc03920584`.
 
-Canonical `4.0.1` groups returned and CSV-serialized result rows in the
-requested comparison order while retaining ascending p-value ranking within
-each comparison. The adapter does not post-process or independently reorder
-those scientific results.
+Canonical `4.1.0` adds configurable rank, significance, and fold-change column
+suffixes while preserving the requested comparison order. Exact ordered
+column-list overrides take precedence over suffix settings. Returned and
+CSV-serialized result rows remain grouped in requested comparison order with
+ascending p-value ranking within each comparison. The adapter does not
+post-process or independently reorder those scientific results.
 
 ## Platform translations and compatibility
 
@@ -45,9 +47,12 @@ those scientific results.
   stable outputs to `/results`; local adapter validation may set the internal
   `OMIX_RESULTS_DIR` environment variable. Output paths are not App Panel
   parameters.
-- The App Panel exposes all 29 canonical public and advanced controls in schema
+- The App Panel exposes all 32 canonical public and advanced controls in schema
   order. It does not expose the 23 internal, deprecated, or inactive
   legacy-renderer controls.
+- The App Panel presets the canonical suffix defaults `_tstat`, `_pval`, and
+  `_FC`. Users may replace them for a consistent alternative convention;
+  exact ordered column-list overrides remain higher priority.
 
 ## Genuine demonstration presets
 
@@ -78,7 +83,7 @@ them without breaking the capsule.
 | Adapter version | Pending — baseline tag not yet established. |
 | Adapter release tag | Pending. |
 | Platform release | Pending validation record. |
-| Runtime tag | `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v1` (from `.codeocean/environment.json`). |
+| Runtime tag | `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v2` (from `.codeocean/environment.json`). |
 | Runtime digest | Pending — no immutable digest has been validated or recorded. |
 | Named-parameter platform run | Pending — GitHub/local checks are not Code Ocean validation. |
 | Syncweaver lock | Pending — no generated `.syncweaver-lock.json` is recorded. |

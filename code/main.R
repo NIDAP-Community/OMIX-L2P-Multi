@@ -108,6 +108,24 @@ option_list <- list(
     default = NULL,
     help = "Comma-separated fold change column names"
   ),
+  make_option(
+    "--t_statistic_suffix",
+    type = "character",
+    default = "_tstat",
+    help = "Suffix appended to each ordered comparison when t-statistic columns are omitted [default %default]"
+  ),
+  make_option(
+    "--significance_suffix",
+    type = "character",
+    default = "_pval",
+    help = "Suffix appended to each ordered comparison when significance columns are omitted [default %default]"
+  ),
+  make_option(
+    "--fold_change_suffix",
+    type = "character",
+    default = "_FC",
+    help = "Suffix appended to each ordered comparison when fold-change columns are omitted [default %default]"
+  ),
 
   make_option(
     "--species",
@@ -705,7 +723,16 @@ if (is.null(deg_table) && !nzchar(deg_input_mode)) {
     }
 
     workflow_comparisons <- parse_workflow_comparisons(opt$comparisons)
-    workflow_columns <- resolve_workflow_multi_columns(deg_table, workflow_comparisons)
+    workflow_columns <- resolve_workflow_multi_columns(
+      deg_table,
+      workflow_comparisons,
+      t_statistic_columns = opt$t_statistic_columns,
+      significance_columns = opt$significance_columns,
+      fold_change_columns = opt$fold_change_columns,
+      t_statistic_suffix = opt$t_statistic_suffix,
+      significance_suffix = opt$significance_suffix,
+      fold_change_suffix = opt$fold_change_suffix
+    )
     opt$gene_names_column <- workflow_columns$gene_names_column
     opt$t_statistic_columns <- paste(workflow_columns$t_statistic_columns, collapse = ",")
     opt$significance_columns <- paste(workflow_columns$significance_columns, collapse = ",")
@@ -993,24 +1020,24 @@ validate_columns_in_table(t_stat_cols, "T-Statistic Columns", available_cols)
 validate_columns_in_table(sig_cols,    "Significance Columns", available_cols)
 validate_columns_in_table(fc_cols,     "Fold Change Columns",  available_cols)
 
-# When column overrides are NOT set, the analysis derives names from comparisons.
-# Validate those derived names are present so the run fails early with clear guidance.
+# When exact column overrides are NOT set, the analysis derives names from the
+# ordered comparison IDs and configured suffixes. Validate those derived names
+# here so the adapter fails early with the same mapping the canonical function
+# will use. Exact ordered column lists above retain precedence.
 if (!is.null(comparisons_vec) && length(comparisons_vec) > 0 &&
     (is.null(t_stat_cols) || is.null(sig_cols) || is.null(fc_cols))) {
-  # Determine the suffix pattern actually used by the data (tstat vs _tstat etc.)
-  # We check derived names only for whichever columns are NOT explicitly overridden.
   derived_missing <- character(0)
   for (comp in comparisons_vec) {
     if (is.null(t_stat_cols)) {
-      col <- paste0(comp, "_tstat")
+      col <- paste0(comp, opt$t_statistic_suffix)
       if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
     }
     if (is.null(sig_cols)) {
-      col <- paste0(comp, "_pval")
+      col <- paste0(comp, opt$significance_suffix)
       if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
     }
     if (is.null(fc_cols)) {
-      col <- paste0(comp, "_FC")
+      col <- paste0(comp, opt$fold_change_suffix)
       if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
     }
   }
@@ -1131,6 +1158,9 @@ results <- l2p_multi(
   t_statistic_columns = t_stat_cols,
   significance_columns = sig_cols,
   fold_change_columns = fc_cols,
+  t_statistic_suffix = opt$t_statistic_suffix,
+  significance_suffix = opt$significance_suffix,
+  fold_change_suffix = opt$fold_change_suffix,
   species = opt$species,
   update_genes = opt$update_genes,
   collections_to_include = collections_vec,
