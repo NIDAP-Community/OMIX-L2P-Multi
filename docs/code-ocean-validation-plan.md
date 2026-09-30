@@ -9,9 +9,9 @@ Before each run, record:
 
 - the exact merged adapter commit;
 - canonical OMIX source commit
-  `258639195c8fd249364c0b65bdcc2ae6603ca64b`;
+  `53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`;
 - the Code Ocean capsule or release identifier;
-- runtime tag `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v1`; and
+- runtime tag `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v2`; and
 - the immutable runtime digest resolved by the platform.
 
 ## Required runs
@@ -35,6 +35,11 @@ Before each run, record:
    - Attach two eligible DEG tables without selecting one explicitly.
    - Confirm the run stops and prints every candidate path.
 5. **Advanced controls**
+   - Run a table whose ordered columns use `_statistic`, `_adjpval`, and
+     `_logFC`; leave the three exact column-list overrides blank and set the
+     corresponding suffix controls.
+   - Run once with exact ordered column lists and deliberately nonmatching
+     suffix settings; confirm the exact lists retain precedence.
    - Run once with `pathway_bubble_significance_statistic=pval`,
      `collection_color_scale=shared`, and a nondefault `pathway_bubble_top_n`.
    - Run once with a small custom pathway table and verify its configured

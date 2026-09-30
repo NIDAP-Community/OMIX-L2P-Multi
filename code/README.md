@@ -26,6 +26,11 @@ Ambiguity is an error and every candidate is printed. Older saved runs may use
 `--deg_file`, including the legacy `Table`, `Filtered DEG`, and `All DEG`
 modes. New runs should use `--deg_table`.
 
+Ordered comparison columns are derived with `--t_statistic_suffix`,
+`--significance_suffix`, and `--fold_change_suffix` when their corresponding
+exact column-list controls are blank. Exact comma-separated column lists take
+precedence over these shared suffix settings.
+
 ## Local validation example
 
 Run from `code/` so relative function paths resolve:

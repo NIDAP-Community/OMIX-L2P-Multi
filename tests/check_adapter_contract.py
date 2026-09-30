@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_ORDER = [
     "deg_table", "custom_pathways", "comparisons", "gene_names_column",
     "t_statistic_columns", "significance_columns", "fold_change_columns",
+    "t_statistic_suffix", "significance_suffix", "fold_change_suffix",
     "species", "update_genes", "collections_to_include", "select_by_rank",
     "select_top_percentage_of_genes", "select_top_genes",
     "significance_threshold", "fold_change_threshold",
@@ -42,6 +43,9 @@ LEGACY_ALIASES = {"deg_file", "collections", "select_top_percentage"}
 
 EXPECTED_DEFAULTS = {
     "comparisons": "B-A,C-A,B-C",
+    "t_statistic_suffix": "_tstat",
+    "significance_suffix": "_pval",
+    "fold_change_suffix": "_FC",
     "species": "Mouse",
     "collections_to_include": "H",
     "select_by_rank": "False",
@@ -158,6 +162,9 @@ def audit(
         "OMIX_RESULTS_DIR",
         "find_attached_deg_table",
         "filter_codeocean_arguments",
+        "t_statistic_suffix = opt$t_statistic_suffix",
+        "significance_suffix = opt$significance_suffix",
+        "fold_change_suffix = opt$fold_change_suffix",
         'opt[["x_axis_title"]]',
         'opt[["y_axis_title"]]',
     ):

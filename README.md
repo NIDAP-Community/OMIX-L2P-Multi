@@ -41,6 +41,13 @@ Enter comparison IDs in the exact order you want analyzed and plotted. The
 adapter does not reinterpret or reverse contrasts. `C-B` therefore requires
 `C-B_*` columns; it will not silently substitute `B-C_*` columns.
 
+When every comparison uses the same alternative naming convention, set the
+advanced suffix controls instead of listing every column. For example,
+`t_statistic_suffix=_statistic`, `significance_suffix=_adjpval`, and
+`fold_change_suffix=_logFC` resolve the ordered columns for every comparison.
+Exact comma-separated column lists remain available for irregular tables and
+take precedence over the suffix settings.
+
 The optional custom pathway input may be an L2P-compatible RDS object or a
 delimited table with one pathway/gene membership per row. The default columns
 are `gene_set_name` and `gene_symbol`.
@@ -52,9 +59,10 @@ are `gene_set_name` and `gene_symbol`.
    `Mouse` plus `B-A,C-A,B-C`.
 3. For your data, select **DEG Table**, replace **Comparisons**, and select the
    correct species.
-4. Leave column overrides blank when names follow the comparison-prefix
-   convention; otherwise provide one comma-separated column per comparison in
-   the same order.
+4. Leave column overrides blank when names use the comparison prefixes and
+   configured suffixes. For a consistent alternative convention, change the
+   three suffix controls; for irregular tables, provide one exact column per
+   comparison in the same order.
 5. Choose built-in collections such as `H,REACTOME` and optionally select a
    custom pathway file.
 6. Run the capsule and inspect `/results`.
@@ -73,6 +81,9 @@ platform result paths are not shown in the App Panel.
 | Control | Default | Purpose |
 | --- | --- | --- |
 | `comparisons` | demo: `B-A,C-A,B-C` | Ordered contrast identifiers. |
+| `t_statistic_suffix` | `_tstat` | Suffix used to derive ordered rank columns when exact overrides are blank. |
+| `significance_suffix` | `_pval` | Suffix used to derive ordered significance columns when exact overrides are blank. |
+| `fold_change_suffix` | `_FC` | Suffix used to derive ordered fold-change columns when exact overrides are blank. |
 | `species` | demo: `Mouse` | Species for symbol validation and ortholog mapping. |
 | `collections_to_include` | `H` | Comma-separated built-in pathway collections. |
 | `select_by_rank` | `FALSE` | Use threshold selection unless explicitly enabled. |

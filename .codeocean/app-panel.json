@@ -87,6 +87,36 @@
       "value_type": "string"
     },
     {
+      "id": "t_statistic_suffix",
+      "category": "columns",
+      "name": "T-Statistic Suffix",
+      "param_name": "t_statistic_suffix",
+      "description": "Suffix appended to each ordered comparison when T-Statistic Columns is blank. Exact ordered column overrides take precedence.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "_tstat"
+    },
+    {
+      "id": "significance_suffix",
+      "category": "columns",
+      "name": "Significance Suffix",
+      "param_name": "significance_suffix",
+      "description": "Suffix appended to each ordered comparison when Significance Columns is blank. Exact ordered column overrides take precedence.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "_pval"
+    },
+    {
+      "id": "fold_change_suffix",
+      "category": "columns",
+      "name": "Fold Change Suffix",
+      "param_name": "fold_change_suffix",
+      "description": "Suffix appended to each ordered comparison when Fold Change Columns is blank. Exact ordered column overrides take precedence.",
+      "type": "text",
+      "value_type": "string",
+      "default_value": "_FC"
+    },
+    {
       "id": "species",
       "category": "input",
       "name": "Species",
