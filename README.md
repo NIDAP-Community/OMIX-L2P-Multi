@@ -132,8 +132,11 @@ The optional legacy `Table`, `Filtered DEG`, and `All DEG` values accepted by
 [OMIX_MODULE_SOURCE.md](OMIX_MODULE_SOURCE.md) records the canonical commit,
 scientific-file hash, schema hash, runtime tag, platform translations, and
 release-evidence state. A successful Code Ocean computation is recorded in the
-[validation record](docs/code-ocean-validation.md), but its runtime digest,
-platform release identifier, and durable output checklist remain pending.
+[validation record](docs/code-ocean-validation.md). Adapter commit
+`743acb2ebae0ca4325bf801bb8ef1f59a71ab3cb` has a successful attached-demo
+computation and complete visible output set;
+its runtime digest, platform release identifier, artifact-content assertions,
+and remaining validation-plan cases are still pending.
 Follow the [Code Ocean validation plan](docs/code-ocean-validation-plan.md)
 before release.
 
