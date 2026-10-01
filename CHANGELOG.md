@@ -8,6 +8,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 ## [Unreleased]
 
 ### Added
+- A synchronized Code Ocean computation (`868130`) for execution-bearing
+  adapter commit `743acb2ebae0ca4325bf801bb8ef1f59a71ab3cb` in
+  capsule `5721592`, including the attached-demo parameters and complete visible
+  output set. Artifact-content assertions, remaining validation-plan cases,
+  runtime digest, release identifier, and release approval remain pending.
 - A partial Code Ocean validation record for successful computation `814585`
   on the merged v4.1.0 adapter. The runtime digest, platform release identifier,
   and durable output checklist remain pending and no release is claimed.

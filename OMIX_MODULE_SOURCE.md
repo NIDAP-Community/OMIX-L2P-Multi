@@ -82,19 +82,19 @@ them without breaking the capsule.
 | --- | --- |
 | Adapter version | Pending — baseline tag not yet established. |
 | Adapter release tag | Pending. |
-| Platform release | Pending validation record. |
+| Platform release | Pending — no platform release identifier has been approved or recorded. |
 | Runtime tag | `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v2` (from `.codeocean/environment.json`). |
 | Runtime digest | Pending — no immutable digest has been validated or recorded. |
-| Named-parameter platform run | Code Ocean computation `814585` completed successfully on 2026-09-30 against merged adapter commit `f47e569dfc131bf38a47109b301d1772e03547f3` using `OMIX Pathways v2`. The immutable runtime digest, platform release identifier, and durable output checklist remain pending. |
+| Named-parameter platform run | Code Ocean capsule `5721592`, computation `868130`, completed successfully on 2026-10-01 against adapter commit `743acb2ebae0ca4325bf801bb8ef1f59a71ab3cb` using `OMIX Pathways (2)`. The attached-demo output set is recorded in `docs/code-ocean-validation.md`; the immutable runtime digest, platform release identifier, artifact-content assertions, and remaining validation-plan runs are pending. |
 | Syncweaver lock | Pending — no generated `.syncweaver-lock.json` is recorded. |
 
 The observed computation is recorded in
 [docs/code-ocean-validation.md](docs/code-ocean-validation.md), and the
 remaining checks are defined by
 [docs/code-ocean-validation-plan.md](docs/code-ocean-validation-plan.md). Do
-not tag or release the adapter until that exact merged commit, its named runtime
-and immutable runtime digest, and the output checklist have passed recorded
-platform validation.
+not tag or release the adapter until the release candidate, its named runtime
+and immutable runtime digest, the artifact-content assertions, and the
+remaining validation-plan cases have passed recorded platform validation.
 
 ## Ownership and synchronization
 
