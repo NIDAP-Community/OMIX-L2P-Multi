@@ -85,13 +85,16 @@ them without breaking the capsule.
 | Platform release | Pending validation record. |
 | Runtime tag | `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v2` (from `.codeocean/environment.json`). |
 | Runtime digest | Pending — no immutable digest has been validated or recorded. |
-| Named-parameter platform run | Pending — GitHub/local checks are not Code Ocean validation. |
+| Named-parameter platform run | Code Ocean computation `814585` completed successfully on 2026-09-30 against merged adapter commit `f47e569dfc131bf38a47109b301d1772e03547f3` using `OMIX Pathways v2`. The immutable runtime digest, platform release identifier, and durable output checklist remain pending. |
 | Syncweaver lock | Pending — no generated `.syncweaver-lock.json` is recorded. |
 
-Follow [docs/code-ocean-validation-plan.md](docs/code-ocean-validation-plan.md)
-after merge. Do not tag or release the adapter until that exact merged commit,
-its named runtime and immutable runtime digest have passed the recorded platform
-validation.
+The observed computation is recorded in
+[docs/code-ocean-validation.md](docs/code-ocean-validation.md), and the
+remaining checks are defined by
+[docs/code-ocean-validation-plan.md](docs/code-ocean-validation-plan.md). Do
+not tag or release the adapter until that exact merged commit, its named runtime
+and immutable runtime digest, and the output checklist have passed recorded
+platform validation.
 
 ## Ownership and synchronization
 

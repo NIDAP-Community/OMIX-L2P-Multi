@@ -8,6 +8,9 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 ## [Unreleased]
 
 ### Added
+- A partial Code Ocean validation record for successful computation `814585`
+  on the merged v4.1.0 adapter. The runtime digest, platform release identifier,
+  and durable output checklist remain pending and no release is claimed.
 - Canonical interface-1 App Panel coverage for all 29 public and advanced
   controls, plus schema/source SHA-256 provenance and a Code Ocean validation
   plan.
