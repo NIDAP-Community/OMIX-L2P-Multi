@@ -16,7 +16,7 @@ implementation, interface schema, and tests are maintained in the canonical
   and
 - keeps comparison order consistent from the input controls through the plots.
 
-Threshold selection is the default: nominal p-value at most `0.05` and
+Threshold selection is the default: nominal p-value below `0.05` and
 absolute linear fold change at least `1.2`. Rank selection remains available as
 an advanced compatibility method. Shared plots show the top 20 pathways by
 adjusted p-value by default; the CSV is not truncated to 20 rows.
@@ -87,7 +87,7 @@ platform result paths are not shown in the App Panel.
 | `species` | demo: `Mouse` | Species for symbol validation and ortholog mapping. |
 | `collections_to_include` | `H` | Comma-separated built-in pathway collections. |
 | `select_by_rank` | `FALSE` | Use threshold selection unless explicitly enabled. |
-| `significance_threshold` | `0.05` | Gene-list significance threshold. |
+| `significance_threshold` | `0.05` | Strict gene-list significance threshold; values must be below it. |
 | `fold_change_threshold` | `1.2` | Absolute linear fold-change threshold. |
 | `number_of_significant_events` | `1` | Comparisons in which a pathway must pass export criteria. |
 | `minimum_pathway_hit_count` | `5` | Minimum selected-gene hits for export selection. |

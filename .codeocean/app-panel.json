@@ -3,7 +3,7 @@
   "named_parameters": true,
   "general": {
     "title": "L2P Multi-Comparison Pathway Analysis",
-    "instructions": "Attach or upload one wide DEG table and enter comparison IDs in the exact order to analyze and plot. Leave DEG Table blank to use the attached demo asset or one unambiguous workflow DEG table. The demo presets use Mouse and B-A,C-A,B-C; replace them for your data. Threshold selection (p-value <= 0.05 and absolute fold change >= 1.2) and adjusted-p-value bubble-plot significance are the defaults. Advanced sections expose every supported canonical tuning control; retired legacy-renderer and platform output-path controls are intentionally hidden."
+    "instructions": "Attach or upload one wide DEG table and enter comparison IDs in the exact order to analyze and plot. Leave DEG Table blank to use the attached demo asset or one unambiguous workflow DEG table. The demo presets use Mouse and B-A,C-A,B-C; replace them for your data. Threshold selection (p-value < 0.05 and absolute fold change >= 1.2) and adjusted-p-value bubble-plot significance are the defaults. Advanced sections expose every supported canonical tuning control; retired legacy-renderer and platform output-path controls are intentionally hidden."
   },
   "datasets": [
     {
@@ -186,7 +186,7 @@
       "category": "selection",
       "name": "Gene Significance Threshold",
       "param_name": "significance_threshold",
-      "description": "Maximum nominal p-value, or threshold applied to explicitly selected adjusted-p-value columns, for DEG selection.",
+      "description": "Strict nominal p-value cutoff, or strict cutoff applied to explicitly selected adjusted-p-value columns, for DEG selection; values must be below the threshold.",
       "type": "text",
       "value_type": "number",
       "default_value": "0.05",

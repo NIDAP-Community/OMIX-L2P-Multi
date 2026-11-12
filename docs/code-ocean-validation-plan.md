@@ -9,7 +9,7 @@ Before each run, record:
 
 - the exact merged adapter commit;
 - canonical OMIX source commit
-  `53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`;
+  `1ad19eddb38ec7db3d072c87fc2620e68793181e`;
 - the Code Ocean capsule or release identifier;
 - runtime tag `codeocean/omix-r-pathway:r4.4.3-bioconductor3.20-v2`; and
 - the immutable runtime digest resolved by the platform.
