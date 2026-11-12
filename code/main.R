@@ -179,7 +179,7 @@ option_list <- list(
     "--significance_threshold",
     type = "double",
     default = 0.05,
-    help = "P-value threshold [default %default]"
+    help = "Strict p-value threshold; values must be below it [default %default]"
   ),
   make_option(
     "--fold_change_threshold",

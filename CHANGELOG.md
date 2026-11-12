@@ -44,6 +44,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 - Keyword footer to `/README.md` and `/code/README.md` for visual branding (2026-07-08)
 
 ### Changed
+- Synced the canonical OMIX L2P Multi 5.0.0 scientific export at
+  `1ad19eddb38ec7db3d072c87fc2620e68793181e`. Threshold-mode gene selection
+  now requires p-values strictly below `significance_threshold`; a p-value
+  exactly equal to the threshold is excluded. This adapter update has not yet
+  been validated or released in Code Ocean.
 - Updated the managed scientific export to canonical OMIX L2P Multi `4.1.0`
   at commit `53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`.
   The App Panel and adapter CLI now expose shared suffix controls for ordered

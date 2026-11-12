@@ -6,10 +6,10 @@
 
 - **Module:** [OMIX L2P Multi](https://github.com/NIDAP-Community/OMIX/tree/main/modules/OMIX-L2P-Multi)
 - **Canonical path:** `modules/OMIX-L2P-Multi/`
-- **Canonical module version:** `4.1.0`
+- **Canonical module version:** `5.0.0`
 - **Canonical interface version:** `1`
 - **Canonical release tag:** Pending — baseline tag not yet established.
-- **Canonical source reference:** [`53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f`](https://github.com/NIDAP-Community/OMIX/commit/53b2ca65aa23f54477f698c4ab6ce0d6ab637a5f)
+- **Canonical source reference:** [`1ad19eddb38ec7db3d072c87fc2620e68793181e`](https://github.com/NIDAP-Community/OMIX/commit/1ad19eddb38ec7db3d072c87fc2620e68793181e)
 - **Interface schema:** [schemas/interface.yml](https://github.com/NIDAP-Community/OMIX/blob/main/modules/OMIX-L2P-Multi/schemas/interface.yml)
 - **Module contract:** [OMIX module contract](https://github.com/NIDAP-Community/OMIX/blob/main/docs/module-contract.md)
 
@@ -17,20 +17,22 @@
 
 | Canonical file | Adapter copy | SHA-256 | Purpose |
 | --- | --- | --- | --- |
-| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `3e646757f19f0beaae78e6983f77545af25a38dc25b057612b350c7ac3251f45` | Multi-comparison L2P implementation. |
+| `R/analysis_functions.R` | `code/functions/analysis_functions.R` | `9a0e27031a56fbae2164eafef0a3a2c44ee86365dfc454f5ffcce2c53629a52a` | Multi-comparison L2P implementation. |
 
 The complete canonical `R/` tree contains the one file above. It was exported
 without modification and verified byte-for-byte at the canonical source
 reference. The completed canonical `schemas/interface.yml` used to build the
 adapter contract has SHA-256
-`5f25de92c72b582852f052b10c82ba501cde9283d0d44752dba205cc03920584`.
+`000d01c9eac00097970abcb309c5eca277b1aa4db5497a80b618e843311b0dd7`.
 
-Canonical `4.1.0` adds configurable rank, significance, and fold-change column
-suffixes while preserving the requested comparison order. Exact ordered
-column-list overrides take precedence over suffix settings. Returned and
-CSV-serialized result rows remain grouped in requested comparison order with
-ascending p-value ranking within each comparison. The adapter does not
-post-process or independently reorder those scientific results.
+Canonical `5.0.0` requires p-values strictly below `significance_threshold`
+for threshold-mode gene selection; a value exactly equal to the threshold is
+excluded. It retains configurable rank, significance, and fold-change column
+suffixes while preserving requested comparison order. Exact ordered column-list
+overrides take precedence over suffix settings. Returned and CSV-serialized
+result rows remain grouped in requested comparison order with ascending
+p-value ranking within each comparison. The adapter does not post-process or
+independently reorder those scientific results.
 
 ## Platform translations and compatibility
 
