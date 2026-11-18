@@ -26,9 +26,9 @@ adjusted p-value by default; the CSV is not truncated to 20 rows.
 Provide one wide DEG table in CSV, TSV, TXT, or RDS format. It must contain:
 
 - one gene-symbol column;
-- one signed ranking statistic per comparison;
-- one p-value or adjusted-p-value column per comparison; and
-- one linear- or log-fold-change column per comparison.
+- for threshold selection (the default), one p-value or adjusted-p-value and
+  one linear- or log-fold-change column per comparison; or
+- for **Select By Rank**, one signed ranking statistic per comparison.
 
 For example:
 
@@ -70,6 +70,8 @@ are `gene_set_name` and `gene_symbol`.
 If **DEG Table** is blank, the adapter accepts only one unambiguous eligible
 table from the attached `deg_table` asset or workflow result. When several
 candidates exist, it stops and lists them rather than choosing one silently.
+Threshold-mode workflow inputs do not require t-statistic columns; rank-mode
+workflow inputs do.
 
 The attached mouse demo and its comparison list are the only App Panel default
 exceptions to the canonical portable interface. All other public and advanced

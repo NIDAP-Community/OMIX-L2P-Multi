@@ -160,16 +160,21 @@ resolve_workflow_multi_columns <- function(
     t_statistic_columns = NULL,
     significance_columns = NULL,
     fold_change_columns = NULL,
+    select_by_rank = FALSE,
     t_statistic_suffix = "_tstat",
     significance_suffix = "_pval",
     fold_change_suffix = "_FC") {
   available_cols <- colnames(df)
-  exact_t_statistic_columns <- parse_workflow_column_override(
-    t_statistic_columns,
-    "T-Statistic Columns",
-    comparisons,
-    available_cols
-  )
+  exact_t_statistic_columns <- if (isTRUE(select_by_rank)) {
+    parse_workflow_column_override(
+      t_statistic_columns,
+      "T-Statistic Columns",
+      comparisons,
+      available_cols
+    )
+  } else {
+    NULL
+  }
   exact_significance_columns <- parse_workflow_column_override(
     significance_columns,
     "Significance Columns",
@@ -193,7 +198,7 @@ resolve_workflow_multi_columns <- function(
     fold_change_columns = exact_fold_change_columns
   )
 
-  if (is.null(columns$t_statistic_columns)) {
+  if (isTRUE(select_by_rank) && is.null(columns$t_statistic_columns)) {
     columns$t_statistic_columns <- vapply(
       comparisons,
       first_comparison_column,
@@ -221,11 +226,20 @@ resolve_workflow_multi_columns <- function(
     )
   }
 
+  if (isTRUE(select_by_rank) &&
+      any(!nzchar(columns$significance_columns))) {
+    columns$significance_columns <- NULL
+  }
+  if (isTRUE(select_by_rank) &&
+      any(!nzchar(columns$fold_change_columns))) {
+    columns$fold_change_columns <- NULL
+  }
+
   missing <- c(
     if (is.null(columns$gene_names_column)) "gene_names_column",
-    if (any(!nzchar(columns$t_statistic_columns))) "t_statistic_columns",
-    if (any(!nzchar(columns$significance_columns))) "significance_columns",
-    if (any(!nzchar(columns$fold_change_columns))) "fold_change_columns"
+    if (isTRUE(select_by_rank) && any(!nzchar(columns$t_statistic_columns))) "t_statistic_columns",
+    if (!isTRUE(select_by_rank) && any(!nzchar(columns$significance_columns))) "significance_columns",
+    if (!isTRUE(select_by_rank) && any(!nzchar(columns$fold_change_columns))) "fold_change_columns"
   )
   if (length(missing) > 0L) {
     stop(

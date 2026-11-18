@@ -39,6 +39,9 @@ independently reorder those scientific results.
 - The canonical `deg_table` path is the named Code Ocean file selector. When
   left blank, the adapter accepts exactly one supported attached table or one
   unambiguous workflow DEG result; it lists candidates and stops on ambiguity.
+  Workflow resolution follows `select_by_rank`: threshold mode requires only
+  significance and fold-change columns, while rank mode requires t-statistic
+  columns.
 - The released `--deg_file` alias remains accepted for saved runs, including
   its legacy `Table`, `Filtered DEG`, and `All DEG` modes. New App Panel runs
   emit only `--deg_table`.
