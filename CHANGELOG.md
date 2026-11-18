@@ -7,6 +7,11 @@ Version numbers correspond to Code Ocean capsule release versions (integers: v1,
 
 ## [Unreleased]
 
+### Fixed
+- Workflow DEG discovery now honors `select_by_rank`: threshold mode accepts
+  p-value and fold-change columns without requiring t-statistic columns, while
+  rank mode continues to require its t-statistic columns.
+
 ### Added
 - A synchronized Code Ocean computation (`868130`) for execution-bearing
   adapter commit `743acb2ebae0ca4325bf801bb8ef1f59a71ab3cb` in

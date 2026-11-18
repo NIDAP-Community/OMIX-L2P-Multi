@@ -729,14 +729,27 @@ if (is.null(deg_table) && !nzchar(deg_input_mode)) {
       t_statistic_columns = opt$t_statistic_columns,
       significance_columns = opt$significance_columns,
       fold_change_columns = opt$fold_change_columns,
+      select_by_rank = opt$select_by_rank,
       t_statistic_suffix = opt$t_statistic_suffix,
       significance_suffix = opt$significance_suffix,
       fold_change_suffix = opt$fold_change_suffix
     )
     opt$gene_names_column <- workflow_columns$gene_names_column
-    opt$t_statistic_columns <- paste(workflow_columns$t_statistic_columns, collapse = ",")
-    opt$significance_columns <- paste(workflow_columns$significance_columns, collapse = ",")
-    opt$fold_change_columns <- paste(workflow_columns$fold_change_columns, collapse = ",")
+    opt$t_statistic_columns <- if (is.null(workflow_columns$t_statistic_columns)) {
+      NULL
+    } else {
+      paste(workflow_columns$t_statistic_columns, collapse = ",")
+    }
+    opt$significance_columns <- if (is.null(workflow_columns$significance_columns)) {
+      NULL
+    } else {
+      paste(workflow_columns$significance_columns, collapse = ",")
+    }
+    opt$fold_change_columns <- if (is.null(workflow_columns$fold_change_columns)) {
+      NULL
+    } else {
+      paste(workflow_columns$fold_change_columns, collapse = ",")
+    }
 
     cat(sprintf(
       paste0(
@@ -745,9 +758,9 @@ if (is.null(deg_table) && !nzchar(deg_input_mode)) {
       ),
       input_file_path,
       opt$gene_names_column,
-      opt$t_statistic_columns,
-      opt$significance_columns,
-      opt$fold_change_columns
+      if (is.null(opt$t_statistic_columns)) "not used (threshold mode)" else opt$t_statistic_columns,
+      if (is.null(opt$significance_columns)) "not required (rank mode)" else opt$significance_columns,
+      if (is.null(opt$fold_change_columns)) "not required (rank mode)" else opt$fold_change_columns
     ))
     warn_gene_duplicates(deg_table, opt$gene_names_column, basename(input_file_path))
     log_time(if (!is.null(workflow_csv_path)) "Loaded workflow DEG CSV" else "Loaded workflow moo-diff.rds")
@@ -1024,11 +1037,14 @@ validate_columns_in_table(fc_cols,     "Fold Change Columns",  available_cols)
 # ordered comparison IDs and configured suffixes. Validate those derived names
 # here so the adapter fails early with the same mapping the canonical function
 # will use. Exact ordered column lists above retain precedence.
+requires_derived_columns <-
+  (isTRUE(opt$select_by_rank) && is.null(t_stat_cols)) ||
+  (!isTRUE(opt$select_by_rank) && (is.null(sig_cols) || is.null(fc_cols)))
 if (!is.null(comparisons_vec) && length(comparisons_vec) > 0 &&
-    (is.null(t_stat_cols) || is.null(sig_cols) || is.null(fc_cols))) {
+    requires_derived_columns) {
   derived_missing <- character(0)
   for (comp in comparisons_vec) {
-    if (is.null(t_stat_cols)) {
+    if (isTRUE(opt$select_by_rank) && is.null(t_stat_cols)) {
       col <- paste0(comp, opt$t_statistic_suffix)
       if (!col %in% available_cols) derived_missing <- c(derived_missing, col)
     }

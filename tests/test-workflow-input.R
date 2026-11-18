@@ -33,12 +33,67 @@ write.csv(deg_table, deg_path, row.names = FALSE)
 write.csv(data.frame(Package = "example"), file.path(workflow_dir, "r-packages.csv"), row.names = FALSE)
 
 stopifnot(identical(normalizePath(find_workflow_csv(fixture)), normalizePath(deg_path)))
-columns <- resolve_workflow_multi_columns(deg_table, comparisons)
+columns <- resolve_workflow_multi_columns(
+  deg_table,
+  comparisons,
+  select_by_rank = TRUE
+)
 stopifnot(
   identical(columns$gene_names_column, "GeneName"),
   identical(unname(columns$t_statistic_columns), paste0(comparisons, "_tstat")),
   identical(unname(columns$significance_columns), paste0(comparisons, "_pval")),
   identical(unname(columns$fold_change_columns), paste0(comparisons, "_FC"))
+)
+
+findmarkers_dir <- file.path(fixture, "findmarkers")
+dir.create(findmarkers_dir)
+findmarkers_path <- file.path(findmarkers_dir, "deg_gene_expression_markers.csv")
+findmarkers_table <- data.frame(Gene = c("GeneA", "GeneB"), check.names = FALSE)
+for (comparison in comparisons) {
+  findmarkers_table[[paste0(comparison, "_pval")]] <- c(0.001, 0.002)
+  findmarkers_table[[paste0(comparison, "_logFC")]] <- c(1, -1)
+}
+write.csv(findmarkers_table, findmarkers_path, row.names = FALSE)
+stopifnot(identical(
+  normalizePath(find_workflow_csv(findmarkers_dir)),
+  normalizePath(findmarkers_path)
+))
+threshold_columns <- resolve_workflow_multi_columns(
+  findmarkers_table,
+  comparisons,
+  select_by_rank = FALSE,
+  significance_suffix = "_pval",
+  fold_change_suffix = "_logFC"
+)
+stopifnot(
+  identical(threshold_columns$gene_names_column, "Gene"),
+  is.null(threshold_columns$t_statistic_columns),
+  identical(unname(threshold_columns$significance_columns), paste0(comparisons, "_pval")),
+  identical(unname(threshold_columns$fold_change_columns), paste0(comparisons, "_logFC"))
+)
+expect_error(
+  resolve_workflow_multi_columns(
+    findmarkers_table,
+    comparisons,
+    select_by_rank = TRUE,
+    significance_suffix = "_pval",
+    fold_change_suffix = "_logFC"
+  ),
+  "t_statistic_columns"
+)
+rank_only_table <- data.frame(Gene = c("GeneA", "GeneB"), check.names = FALSE)
+for (comparison in comparisons) {
+  rank_only_table[[paste0(comparison, "_tstat")]] <- c(1, -1)
+}
+rank_columns <- resolve_workflow_multi_columns(
+  rank_only_table,
+  comparisons,
+  select_by_rank = TRUE
+)
+stopifnot(
+  identical(unname(rank_columns$t_statistic_columns), paste0(comparisons, "_tstat")),
+  is.null(rank_columns$significance_columns),
+  is.null(rank_columns$fold_change_columns)
 )
 
 alternative_suffix_table <- data.frame(
@@ -53,6 +108,7 @@ for (comparison in comparisons) {
 alternative_columns <- resolve_workflow_multi_columns(
   alternative_suffix_table,
   comparisons,
+  select_by_rank = TRUE,
   t_statistic_suffix = "_statistic",
   significance_suffix = "_adjpval",
   fold_change_suffix = "_logFC"
@@ -96,6 +152,7 @@ override_table$fc_three <- c(4, -4)
 override_columns <- resolve_workflow_multi_columns(
   override_table,
   comparisons,
+  select_by_rank = TRUE,
   t_statistic_columns = "rank_one,rank_two,rank_three",
   significance_columns = "sig_one,sig_two,sig_three",
   fold_change_columns = "fc_one,fc_two,fc_three",
